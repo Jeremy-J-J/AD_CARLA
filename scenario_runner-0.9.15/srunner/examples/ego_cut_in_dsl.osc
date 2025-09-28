@@ -1,0 +1,143 @@
+# File: ego_cut_in_dsl.osc
+# Purpose: Define an ego vehicle cut-in scenario with safety constraints
+# This scenario simulates a controlled cut-in maneuver between vehicles
+# with proper safety checks and realistic conditions
+
+import basic.osc
+
+# Define the main scenario
+scenario sut.ego_cut_in:
+    # --- Parameters ---
+    # Cruise speed for the ego vehicle
+    requested_cruise_speed: speed
+    keep(default requested_cruise_speed == 80kph)
+
+    # Ego's initial lane (1-based lane numbering)
+    ego_initial_lane: int
+    keep(default ego_initial_lane == 1)  # Start in leftmost lane
+
+    # Safety parameters
+    min_safe_distance: distance  # Minimum safe distance between vehicles
+    keep(default min_safe_distance == 20m)
+
+    max_cut_in_speed_delta: speed  # Maximum speed difference during cut-in
+    keep(default max_cut_in_speed_delta == 15kph)
+
+    # Weather and environment conditions
+    weather_condition: string  # Current weather state
+    keep(default weather_condition == "clear")
+    keep(weather_condition in ["clear", "light_rain", "heavy_rain"])
+
+    road_friction: float  # Road friction coefficient
+    keep(default road_friction == 1.0)  # Default dry road
+    keep(road_friction >= 0.3)  # Minimum acceptable friction
+
+    # --- Vehicle Definitions ---
+    ego_vehicle: Model3
+    target_vehicle: Rubicon  # Vehicle we want to cut in front of
+    following_vehicle: Rubicon  # Vehicle following the target vehicle
+
+    # --- Success Criteria ---
+    # Define what constitutes a successful scenario execution
+    success_criteria:
+        # Ego vehicle successfully changes lane
+        lane(ego_vehicle) == ego_initial_lane + 1
+        # Safe distances maintained throughout
+        distance(ego_vehicle, target_vehicle) >= min_safe_distance
+        distance(target_vehicle, following_vehicle) >= min_safe_distance
+        # Speed differences within limits
+        abs(speed(ego_vehicle) - speed(target_vehicle)) <= max_cut_in_speed_delta
+
+    # --- Failure Conditions ---
+    failure_conditions:
+        # Collision detection
+        collision(ego_vehicle, target_vehicle)
+        collision(target_vehicle, following_vehicle)
+        # Unsafe conditions
+        distance(ego_vehicle, target_vehicle) < min_safe_distance
+        distance(target_vehicle, following_vehicle) < min_safe_distance
+        # Speed violation
+        abs(speed(ego_vehicle) - speed(target_vehicle)) > max_cut_in_speed_delta
+
+    # --- Scenario Execution ---
+    do serial():
+        # --- Environment Setup ---
+        init_environment: serial():
+            # Set weather conditions
+            set_weather(condition: weather_condition)
+            set_road_condition(friction: road_friction)
+
+        # --- Setup Phase: Initial positions ---
+        setup: parallel(duration: 8s):
+            # Ego vehicle starts in initial lane
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                lane(ego_initial_lane, at: start)
+
+            # Target vehicle in the right lane
+            target_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)  # Slightly slower
+                lane(ego_initial_lane + 1, at: start)
+                position(50m, ahead_of: ego_vehicle, at: start)
+
+            # Following vehicle behind target
+            following_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)
+                lane(ego_initial_lane + 1, at: start)
+                position(min_safe_distance + 10m, behind: target_vehicle, at: start)
+
+        # --- Safety Check Phase ---
+        check_conditions: serial():
+            # Verify safe distances
+            assert(distance(ego_vehicle, target_vehicle) >= min_safe_distance)
+            assert(distance(target_vehicle, following_vehicle) >= min_safe_distance)
+            
+            # Verify speed differences
+            assert(abs(speed(ego_vehicle) - speed(target_vehicle)) <= max_cut_in_speed_delta)
+
+            # Verify environment conditions
+            assert(get_visibility() >= 100m)  # Minimum visibility requirement
+            assert(get_road_friction() >= 0.3)  # Minimum friction requirement
+
+        # --- Cut-in Phase ---
+        cut_in: parallel(duration: 4s):
+            # Ego accelerates and changes lane to cut in
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed + 10kph)  # Temporary speed increase
+                change_lane(lane_changes: 1, side: right)
+                # Maintain safe distance from target vehicle
+                keep_distance(min_safe_distance, from: target_vehicle)
+
+            # Other vehicles maintain their behavior with safety constraints
+            target_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)
+                keep_distance(min_safe_distance, from: following_vehicle)
+
+            following_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)
+                keep_distance(min_safe_distance, from: target_vehicle)
+
+        # --- Stabilization Phase ---
+        stabilize: parallel(duration: 5s):
+            # Ego returns to normal cruise speed
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                keep_distance(min_safe_distance, from: target_vehicle)
+            
+            # Other vehicles maintain their behavior with safety constraints
+            target_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)
+                keep_distance(min_safe_distance, from: following_vehicle)
+
+            following_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 5kph)
+                keep_distance(min_safe_distance, from: target_vehicle)
+
+        # --- Verification Phase ---
+        verify_success: serial():
+            # Check all success criteria are met
+            assert(success_criteria)
+            # Verify no failure conditions occurred
+            assert(not failure_conditions)
+
+# End of scenario definition

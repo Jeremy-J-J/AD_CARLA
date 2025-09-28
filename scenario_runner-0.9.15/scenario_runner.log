@@ -1,0 +1,7 @@
+scenario_runner.py:96: DeprecationWarning: distutils Version classes are deprecated. Use packaging.version instead.
+  if LooseVersion(dist.version) < LooseVersion('0.9.15'):
+Preparing scenario: FollowLeadingVehicle
+ScenarioManager: Running scenario FollowLeadingVehicle
+Not all scenario tests were successful
+Please run with --output for further information
+No more scenarios .... Exiting

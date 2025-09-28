@@ -1,0 +1,74 @@
+import basic.osc
+
+scenario dut.cut_out_fully_blocking:
+
+    ego_vehicle: Model3
+    npc: Rubicon
+    blocking_vehicle: Rubicon
+    
+    event start
+    event cut_out_start
+    event scenario_end
+    
+    do serial:
+        initial_setup: parallel(duration: 3s):
+            npc.drive() with:
+                speed(50kph)
+                lane(1, at: start)
+            ego_vehicle.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                lane(1, at: start)
+                position(20m, ahead_of: npc, at: start)
+            blocking_vehicle.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                position(50m, ahead_of: npc, at: start)
+                speed(0kph)
+
+        alks_activation: parallel(duration: 1s):
+            ego_vehicle.drive() with:
+                speed(50kph)
+                lane(1, at: start)
+            npc.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                position(2s, behind: ego_vehicle, at: start)
+            blocking_vehicle.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                position(50m, ahead_of: npc, at: start)
+                speed(0kph)
+
+        approach_and_cut_out: parallel(duration: 10s):
+            ego_vehicle.drive() with:
+                speed(50kph)
+                lane(1, at: start)
+            npc.drive() with:
+                lane(right_of: ego_vehicle, at: cut_out_start)
+                position(20m, ahead_of: ego_vehicle, at: cut_out_start)
+                speed(50kph)
+            blocking_vehicle.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                position(50m, ahead_of: npc, at: start)
+                speed(0kph)
+
+        final_phase: parallel(duration: 10s):
+            ego_vehicle.drive() with:
+                speed(50kph)
+                lane(1, at: start)
+            npc.drive() with:
+                lane(right_of: ego_vehicle, at: cut_out_start)
+                speed(50kph)
+            blocking_vehicle.drive() with:
+                lane(same_as: ego_vehicle, at: start)
+                position(50m, ahead_of: npc, at: start)
+                speed(0kph)
+
+scenario top:
+    set_map("Town04")
+    min_lane: int = 2
+    path_min_driving_lanes(min_lane)
+
+    ego_vehicle: Model3
+    npc: Rubicon
+    blocking_vehicle: Rubicon
+
+    do serial:
+        dut.cut_out_fully_blocking()

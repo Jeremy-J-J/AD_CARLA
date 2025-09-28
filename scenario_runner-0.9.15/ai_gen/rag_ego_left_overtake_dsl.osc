@@ -1,0 +1,98 @@
+# File: rag_ego_left_overtake_dsl.osc
+# Purpose: Complete ego left overtaking DSL implementation
+# Based on rag_osc examples with comprehensive safety features
+
+import basic.osc
+# import domain.osc
+
+# Main left overtaking scenario
+scenario top:
+    # Parameters
+    #ego_speed: speed(90kph)
+    #target_speed: speed(70kph)
+    #safe_distance: distance(30m)
+    #max_speed_increase: speed(25kph)
+    path: Path                 
+    path.set_map("Town04")
+    path.path_min_driving_lanes(2)
+
+    event start
+    event left
+    event right
+
+    # Vehicles
+    ego_vehicle: Model3
+    target: Rubicon
+    oncoming: Rubicon
+    following: Rubicon
+
+    # # Success criteria
+    # success_criteria:
+    #     lane(ego, 1)   # Successfully in left lane
+    #     position(ego, ahead_of: target)
+    #     distance(ego, target) >= safe_distance
+
+    # # Failure conditions
+    # failure_conditions:
+    #     collision(ego, any)
+    #     distance(ego, oncoming) < safe_distance
+
+    do serial():
+        # Setup initial positions
+        setup: parallel(duration: 1s):
+            target.drive(path) with:
+                speed(70kph)
+                lane(2, at: start)
+
+            ego_vehicle.drive(path) with:
+                speed(90kph)
+                lane(same_as: target, at: start)
+                position(50m, behind: target, at: start)
+
+            following.drive(path) with:
+                speed(70kph)
+                lane(same_as: target, at: start)
+                position(50m + 20m, behind: target, at: start)
+
+            oncoming.drive(path) with:
+                speed(80kph)
+                lane(1, at: start)
+                position(200m, ahead_of: ego_vehicle, at: start)
+
+        # Safety check
+        # check_safety: serial():
+        #     assert(distance(ego, oncoming) >= 30m * 3)
+        #     assert(lane_is_clear(lane: 1, ahead_of: ego, within: 150m))
+
+        # Execute left overtaking
+        overtake: parallel(duration: 6s):
+            ego_vehicle.drive(path) with:
+                speed(90kph + 25kph)
+                change_lane(lane_changes: 1, side: left)
+
+        # Complete pass
+        pass_target: parallel(duration: 4s):
+            ego_vehicle.drive(path) with:
+                speed(90kph + 25kph)
+                lane(1)
+                position(80m, ahead_of: target)
+
+        # Merge back safely
+        merge_back: parallel(duration: 3s):
+            ego_vehicle.drive(path) with:
+                speed(90kph)
+                change_lane(lane_changes: 1, side: right)
+                position(30m, from: target)
+
+        # # Verify success
+        # verify: serial():
+        #     assert(success_criteria)
+        #     assert(not failure_conditions)
+
+# Simple usage scenario
+# scenario top:
+#     path: Path
+#     do serial():
+#         path.set_map("Town04")
+#         path.path_min_driving_lanes(3)
+#         sut.ego_left_overtake()

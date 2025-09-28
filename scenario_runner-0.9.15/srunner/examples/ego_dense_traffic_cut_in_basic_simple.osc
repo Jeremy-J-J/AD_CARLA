@@ -1,0 +1,128 @@
+# File: ego_dense_traffic_cut_in_basic_simple.osc
+import basic.osc
+
+# Define the main scenario
+scenario sut.ego_dense_traffic_cut_in:
+
+    # --- Parameters ---
+    # Cruise speed for the ego vehicle (kph is defined in basic.osc)
+    requested_cruise_speed: speed
+    # Use a single fixed value or a range supported by the tool for defaults
+    # The 'in [60..120]kph' syntax might not be supported directly in 'keep(default ...)'
+    # Let's try a default value. Parameter variation is usually handled externally.
+    keep(default requested_cruise_speed == 80kph)
+
+    # Ego's initial lane (1-based lane numbering)
+    gen_ego_initial_lane: int
+    keep(default gen_ego_initial_lane == 1) # Start in leftmost lane
+
+    # --- Vehicle Definitions ---
+    # Define the vehicles involved in the scenario
+    ego_vehicle: Model3
+    lead_vehicle: Rubicon
+    blocking_vehicle_1: Rubicon
+    blocking_vehicle_2: Rubicon
+    # Simplify by using fewer vehicles for the initial version
+    # blocking_vehicle_3: Rubicon
+    # blocking_vehicle_4: Rubicon
+
+    # adj_left_vehicle_1: Rubicon
+    # adj_right_vehicle_1: Rubicon
+
+    # --- Global Definitions (for map/path, usually set externally or in a top scenario) ---
+    # Defining globals like this might cause issues. Let's assume path is available.
+    # global path: Path
+    # global my_map: string = "Town04"
+    # global min_lane: int = 3
+
+    # For this example, we'll assume 'path' is available as a global or predefined.
+    # A top-level scenario (like in cut_in_and_slow_range.osc) would typically set this.
+    # We can reference 'path' directly if it's defined in the scope that runs this scenario.
+
+    # --- Scenario Execution ---
+    # The structure should follow the examples like cut_in_and_slow_range.osc
+    do serial():
+
+        # --- Setup Phase: Get vehicles into initial positions ---
+        # This phase uses parallel execution to set up the initial driving state
+        get_ahead: parallel(duration: 10s):
+            # Ego vehicle starts driving on the path in its initial lane
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                lane(gen_ego_initial_lane, at: start) # Ego starts in its designated lane
+
+            # Lead vehicle starts in the target lane (assumed to be ego's lane + 1)
+            # and is positioned ahead of the ego
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph) # Lead is slower
+                lane(gen_ego_initial_lane + 1, at: start) # Target lane
+                # Positioning lead vehicle ahead of ego
+                # The 'position' modifier syntax from domain model: position(distance, ahead_of/behind)
+                # Place lead vehicle 80 meters ahead of ego at the start
+                position(80m, ahead_of: ego_vehicle, at: start)
+
+            # Blocking vehicle 1 is placed behind the lead vehicle
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph) # Same speed as lead
+                lane(gen_ego_initial_lane + 1, at: start) # In target lane
+                # Place 20 meters behind the lead vehicle
+                position(20m, behind: lead_vehicle, at: start)
+
+            # Blocking vehicle 2 is placed behind blocking vehicle 1
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph) # Same speed as lead
+                lane(gen_ego_initial_lane + 1, at: start) # In target lane
+                # Place 20 meters behind the first blocking vehicle
+                position(20m, behind: blocking_vehicle_1, at: start)
+
+        # --- Main Cut-in Phase ---
+        # This phase executes the ego's cut-in maneuver
+        change_lane: parallel(duration: 5s):
+            # Ego vehicle attempts to change lane to the right (into the target lane)
+            # The change_lane modifier is from the basic.osc example
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                # Attempt to change 1 lane to the right
+                change_lane(lane_changes: 1, side: right)
+
+            # Other vehicles continue their predefined driving behavior
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+        # --- Post-cut-in Phase ---
+        # Continue driving for a short period after the cut-in
+        slow: parallel(duration: 10s):
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+# End of scenario definition
+
+# --- Top-level scenario (often in a separate .osc file like cut_in_and_slow_range.osc) ---
+# This part is usually separate but shown here for completeness on how 'path' is set.
+# It's commented out because you likely only need the 'sut.ego_dense_traffic_cut_in' part.
+#
+# scenario top:
+#     # Define the global path variable
+#     path: Path
+#     # Set the map for the path
+#     path.set_map("Town04")
+#     # Set minimum number of driving lanes
+#     path.path_min_driving_lanes(3)
+#
+#     # Define vehicle instances
+#     ego_vehicle: Model3
+#     npc: Rubicon # This can be reused or new instances can be created
+#
+#     # Run the main scenario
+#     do serial:
+#         sut.ego_dense_traffic_cut_in()

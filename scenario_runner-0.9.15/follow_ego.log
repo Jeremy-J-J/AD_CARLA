@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "follow_ego.py", line 25, in <module>
+    world.wait_for_tick()
+KeyboardInterrupt

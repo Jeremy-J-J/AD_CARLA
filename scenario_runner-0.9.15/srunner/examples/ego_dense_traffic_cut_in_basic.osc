@@ -1,0 +1,78 @@
+import basic.osc
+
+# ---------- 角度物理量 ----------
+type angle is SI(rad: 1)
+unit degree of angle is SI(rad: 1, factor: 57.295779513)
+unit deg    of angle is SI(rad: 1, factor: 57.295779513)
+unit radian of angle is SI(rad: 1, factor: 1)
+unit rad    of angle is SI(rad: 1, factor: 1)
+
+# ---------- 速度物理量 ----------
+type speed is SI(m: 1, s: -1)
+
+# ======================================================================
+scenario top:
+
+    path: Path
+    path.set_map("Town04")
+    path.path_min_driving_lanes(3)
+
+    requested_cruise_speed: speed
+    keep(default requested_cruise_speed == 80kph)
+
+    ego_vehicle        : Model3
+    lead_vehicle       : Rubicon
+    blocking_vehicle_1 : Rubicon
+    blocking_vehicle_2 : Rubicon
+
+    do serial:
+
+        # ① 车辆就位 ------------------------------------------------------
+        get_ready: parallel(duration: 10s):
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                lane(1)
+
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+                lane(2)
+                position(80m, ahead_of: ego_vehicle)
+
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+                lane(2)
+                position(20m, behind: lead_vehicle)
+
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+                lane(2)
+                position(20m, behind: blocking_vehicle_1)
+
+        # ② Ego 右移切入 --------------------------------------------------
+        cut_in: parallel(duration: 5s):
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                change_lane()          # ← 改为无参数
+
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+        # ③ 稳定跟驰 ------------------------------------------------------
+        hold: parallel(duration: 10s):
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+
+            lead_vehicle.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+            blocking_vehicle_1.drive(path) with:
+                speed(requested_cruise_speed - 10kph)
+
+            blocking_vehicle_2.drive(path) with:
+                speed(requested_cruise_speed - 10kph)

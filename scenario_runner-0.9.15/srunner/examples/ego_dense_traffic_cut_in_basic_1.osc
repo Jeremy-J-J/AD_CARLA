@@ -1,0 +1,238 @@
+import basic.osc
+
+# Define the main scenario
+scenario sut.ego_dense_traffic_cut_in:
+
+    # --- Parameters ---
+    # General scenario parameters
+    requested_cruise_speed: speed
+    keep(default requested_cruise_speed in [60..120]kph)
+
+    # Ego initial state
+    gen_ego_initial_lane: int
+    keep(default gen_ego_initial_lane in [1..3]) # Assuming up to 3 lanes
+
+    # Lead vehicle (in the target lane, ahead of ego's insertion point)
+    gen_lead_vehicle_initial_distance: length
+    keep(default gen_lead_vehicle_initial_distance in [50..100]m)
+    gen_lead_vehicle_speed: speed
+    keep(default gen_lead_vehicle_speed == requested_cruise_speed - 10kph) # Slower than ego
+
+    # Blocking vehicles ahead in the target lane (forming dense traffic)
+    gen_num_blocking_vehicles_ahead: int
+    keep(default gen_num_blocking_vehicles_ahead in [2..4])
+    gen_blocking_vehicle_spacing: length
+    keep(default gen_blocking_vehicle_spacing in [5..15]m) # Distance between blocking vehicles
+
+    # Adjacent lane traffic (left and right, contributing to density)
+    gen_adjacent_lane_num_vehicles: int
+    keep(default gen_adjacent_lane_num_vehicles in [2..5])
+    gen_adjacent_vehicle_spacing: length
+    keep(default gen_adjacent_vehicle_spacing in [10..20]m)
+
+    # Cut-in maneuver parameters (for ego)
+    gen_cut_in_gap_to_lead: length # Desired gap behind the lead vehicle after cut-in
+    keep(default gen_cut_in_gap_to_lead in [10..20]m)
+    gen_cut_in_duration: time
+    keep(default gen_cut_in_duration in [4..6]s)
+    gen_cut_in_lateral_offset: length # Offset from the center of the original lane during cut-in
+    keep(default gen_cut_in_lateral_offset in [0.5m..1.5m])
+
+
+    # --- Vehicle Definitions ---
+    ego_vehicle: Model3
+    lead_vehicle: Rubicon
+    # Arrays or lists of vehicles for groups are not directly supported in base OSC2
+    # We'll define individual vehicles for the key ones and imply the rest
+    blocking_vehicle_1: Rubicon
+    blocking_vehicle_2: Rubicon
+    blocking_vehicle_3: Rubicon
+    blocking_vehicle_4: Rubicon
+
+    adj_left_vehicle_1: Rubicon
+    adj_left_vehicle_2: Rubicon
+    adj_left_vehicle_3: Rubicon
+    adj_left_vehicle_4: Rubicon
+    adj_left_vehicle_5: Rubicon
+
+    adj_right_vehicle_1: Rubicon
+    adj_right_vehicle_2: Rubicon
+    adj_right_vehicle_3: Rubicon
+    adj_right_vehicle_4: Rubicon
+    adj_right_vehicle_5: Rubicon
+
+    # --- Global Definitions (Map and Path) ---
+    global path: Path
+    global my_map: string = "Town04" # Example map, adjust as needed
+    global min_lane: int = 3
+
+
+    # --- Scenario Execution ---
+    do serial():
+
+        # --- Setup Phase: Configure Map and Initial Positions ---
+        setup_phase: parallel():
+            on @start:
+                path.set_map(my_map)
+                path.path_min_driving_lanes(min_lane)
+
+            # Position Ego Vehicle
+            ego_vehicle.drive(path) with:
+                speed(requested_cruise_speed)
+                lane(gen_ego_initial_lane, at: start)
+
+            # Position Lead Vehicle in target lane
+            # Target lane is typically the one ego wants to move into.
+            # For simplicity, assume target lane is ego's initial lane + 1 (if exists) or -1.
+            # This logic is usually handled by the composition tool or template.
+            # Here we assume a fixed target lane for demonstration (e.g., lane 2 if ego starts in 1).
+            # Actual implementation would be more dynamic.
+            lead_vehicle.drive(path) with:
+                speed(gen_lead_vehicle_speed)
+                lane(gen_ego_initial_lane + 1, at: start) # Simplified target lane logic
+                # Use the 'position' modifier from the domain model library
+                # Place the lead vehicle ahead of the ego by a specific distance
+                position(distance: gen_lead_vehicle_initial_distance, ahead_of: ego_vehicle, at: start)
+
+            # Position Blocking Vehicles Ahead (in target lane)
+            # Spaced behind the lead vehicle
+            if gen_num_blocking_vehicles_ahead >= 1:
+                blocking_vehicle_1.drive(path) with:
+                    speed(gen_lead_vehicle_speed)
+                    lane(gen_ego_initial_lane + 1, at: start)
+                    # Place behind the lead vehicle
+                    position(distance: gen_blocking_vehicle_spacing, behind: lead_vehicle, at: start)
+
+            if gen_num_blocking_vehicles_ahead >= 2:
+                blocking_vehicle_2.drive(path) with:
+                    speed(gen_lead_vehicle_speed)
+                    lane(gen_ego_initial_lane + 1, at: start)
+                    # Place behind the first blocking vehicle
+                    position(distance: gen_blocking_vehicle_spacing, behind: blocking_vehicle_1, at: start)
+
+            if gen_num_blocking_vehicles_ahead >= 3:
+                blocking_vehicle_3.drive(path) with:
+                    speed(gen_lead_vehicle_speed)
+                    lane(gen_ego_initial_lane + 1, at: start)
+                    # Place behind the second blocking vehicle
+                    position(distance: gen_blocking_vehicle_spacing, behind: blocking_vehicle_2, at: start)
+
+            if gen_num_blocking_vehicles_ahead >= 4:
+                blocking_vehicle_4.drive(path) with:
+                    speed(gen_lead_vehicle_speed)
+                    lane(gen_ego_initial_lane + 1, at: start)
+                    # Place behind the third blocking vehicle
+                    position(distance: gen_blocking_vehicle_spacing, behind: blocking_vehicle_3, at: start)
+
+            # Position Adjacent Lane Vehicles (Left)
+            # Assume left lane is gen_ego_initial_lane - 1 (if exists)
+            if gen_ego_initial_lane > 1:
+                adj_left_vehicle_1.drive(path) with:
+                    speed(requested_cruise_speed)
+                    lane(gen_ego_initial_lane - 1, at: start)
+                    # Place ahead of ego as an example starting point
+                    position(distance: 20m, ahead_of: ego_vehicle, at: start)
+
+                if gen_adjacent_lane_num_vehicles >= 2:
+                    adj_left_vehicle_2.drive(path) with:
+                        speed(requested_cruise_speed)
+                        lane(gen_ego_initial_lane - 1, at: start)
+                        # Space them behind the previous vehicle
+                        position(distance: gen_adjacent_vehicle_spacing, behind: adj_left_vehicle_1, at: start)
+
+                if gen_adjacent_lane_num_vehicles >= 3:
+                    adj_left_vehicle_3.drive(path) with:
+                        speed(requested_cruise_speed)
+                        lane(gen_ego_initial_lane - 1, at: start)
+                        position(distance: gen_adjacent_vehicle_spacing, behind: adj_left_vehicle_2, at: start)
+
+                if gen_adjacent_lane_num_vehicles >= 4:
+                    adj_left_vehicle_4.drive(path) with:
+                        speed(requested_cruise_speed)
+                        lane(gen_ego_initial_lane - 1, at: start)
+                        position(distance: gen_adjacent_vehicle_spacing, behind: adj_left_vehicle_3, at: start)
+
+                if gen_adjacent_lane_num_vehicles >= 5:
+                    adj_left_vehicle_5.drive(path) with:
+                        speed(requested_cruise_speed)
+                        lane(gen_ego_initial_lane - 1, at: start)
+                        position(distance: gen_adjacent_vehicle_spacing, behind: adj_left_vehicle_4, at: start)
+
+            # Position Adjacent Lane Vehicles (Right)
+            # Assume right lane is gen_ego_initial_lane + 1 (if exists)
+            # Simplified logic for placing vehicles in the adjacent right lane.
+            # This part might need adjustment based on specific lane numbering.
+            if gen_ego_initial_lane < 3:
+                adj_right_vehicle_1.drive(path) with:
+                    speed(requested_cruise_speed)
+                    # Determine the correct lane for the adjacent right vehicle
+                    # If ego is in lane 1, adjacent right could be lane 2 or 3 depending on context.
+                    # If ego is in lane 2, adjacent right is lane 3.
+                    # This is a simplification. In practice, lane logic would be more robust.
+                    # For demonstration, let's place them in a lane that's likely different from target.
+                    # If ego starts in lane 1, target is 2, put adj right in lane 3.
+                    # If ego starts in lane 2, target is 3, put adj right in lane 1 (if it exists).
+                    if gen_ego_initial_lane == 1:
+                        lane(3, at: start) # Put in lane 3
+                    else: # gen_ego_initial_lane == 2
+                        lane(1, at: start) # Put in lane 1
+
+                    # Place ahead of ego as an example starting point
+                    position(distance: 30m, ahead_of: ego_vehicle, at: start)
+
+                # Add more adjacent right vehicles similarly if needed
+                # Omitted for brevity, but the pattern is similar.
+
+        with: duration(5s) # Short setup duration
+
+        # --- Main Cut-in Phase ---
+        cut_in_phase: parallel(overlap: equal):
+            duration(gen_cut_in_duration)
+
+            # Ego performs the cut-in maneuver
+            # This involves changing lane and adjusting position/speed
+            ego_vehicle.drive(path) with:
+                # Maintain speed
+                speed(requested_cruise_speed)
+                # Change lane to the target lane (simplified)
+                # The target lane logic should ideally match the setup (gen_ego_initial_lane + 1)
+                # change_lane is a modifier available in basic.osc examples
+                change_lane(lane_changes: 1, side: right) # Simplified, assumes right cut-in is desired
+
+            # Lead vehicle continues
+            lead_vehicle.drive(path) with:
+                speed(gen_lead_vehicle_speed)
+                # Lead should keep its lane
+                keep_lane()
+
+            # Blocking vehicles continue
+            if gen_num_blocking_vehicles_ahead >= 1:
+                blocking_vehicle_1.drive(path) with: speed(gen_lead_vehicle_speed); keep_lane()
+            if gen_num_blocking_vehicles_ahead >= 2:
+                blocking_vehicle_2.drive(path) with: speed(gen_lead_vehicle_speed); keep_lane()
+            if gen_num_blocking_vehicles_ahead >= 3:
+                blocking_vehicle_3.drive(path) with: speed(gen_lead_vehicle_speed); keep_lane()
+            if gen_num_blocking_vehicles_ahead >= 4:
+                blocking_vehicle_4.drive(path) with: speed(gen_lead_vehicle_speed); keep_lane()
+
+            # Adjacent lane vehicles continue
+            # Left lane vehicles
+            adj_left_vehicle_1.drive(path) with: speed(requested_cruise_speed); keep_lane()
+            if gen_adjacent_lane_num_vehicles >= 2: adj_left_vehicle_2.drive(path) with: speed(requested_cruise_speed); keep_lane()
+            if gen_adjacent_lane_num_vehicles >= 3: adj_left_vehicle_3.drive(path) with: speed(requested_cruise_speed); keep_lane()
+            if gen_adjacent_lane_num_vehicles >= 4: adj_left_vehicle_4.drive(path) with: speed(requested_cruise_speed); keep_lane()
+            if gen_adjacent_lane_num_vehicles >= 5: adj_left_vehicle_5.drive(path) with: speed(requested_cruise_speed); keep_lane()
+
+            # Right lane vehicles (logic depends on initial setup)
+            adj_right_vehicle_1.drive(path) with: speed(requested_cruise_speed); keep_lane()
+            # Add more if defined.
+
+        # --- Post-cut-in Phase (Optional, implicit continuation) ---
+        # The scenario can end here, or continue with vehicles driving.
+        # Implicit continuation is handled by the `drive()` actions persisting.
+        # If explicit post-phase is needed, add another parallel block here.
+
+    # Overall scenario duration
+    with: duration(20s) # Adjust total duration as needed
+
+# End of scenario definition

@@ -1,0 +1,22 @@
+{
+    "scenario": "OSC2Scenario",
+    "success": true,
+    "criteria": [
+        {
+            "name": "CollisionTest",
+            "actor": "tesla.model3-1283",
+            "optional": false,
+            "expected": 0,
+            "actual": 0,
+            "success": true
+        },
+        {
+            "name": "Duration",
+            "actor": "all",
+            "optional": false,
+            "expected": 100000,
+            "actual": 17.0500002540648,
+            "success": true
+        }
+    ]
+}

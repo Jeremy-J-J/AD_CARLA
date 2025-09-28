@@ -1,0 +1,72 @@
+$$template():
+    sim_config: $$param()
+    map: $$param()
+    scenario_str_generic: $$param()
+
+    gen_cut_in_vehicle_avoid_collisions_B1: $$param()
+    gen_cut_in_vehicle_category_B1: $$param()
+    gen_cut_in_vehicle_lateral_at_essence_end_B1: $$param()
+    gen_cut_in_vehicle_lateral_at_essence_start_B1: $$param()
+    gen_cut_in_vehicle_rel_speed_at_essence_end_B1: $$param()
+    gen_cut_in_vehicle_rel_speed_at_essence_start_B1: $$param()
+    gen_cut_in_vehicle_side_at_essence_start_B1: $$param()
+    gen_cut_in_vehicle_speed_at_essence_end_B1: $$param()
+    gen_cut_in_vehicle_speed_at_essence_start_B1: $$param()
+    gen_cut_in_vehicle_time_gap_at_essence_end_B1: $$param()
+    gen_cut_in_vehicle_time_gap_at_essence_start_B1: $$param()
+    gen_duration_at_essence_generic_B1: $$param()
+
+$$expand():
+import "$PROJECT_DIR/projectLibs/project_scenario_base/project_base_scenario_$$(sim_config).osc"
+
+import "$OSC2LIB/scenarios/vehicle_cut_in/vehicle_cut_in/vehicle_cut_in_top.osc"
+
+extend test_config:
+    set map = "$OSC2LIB/maps/$$(map).xodr"
+
+
+
+
+scenario sut.$$(scenario_str_generic) inherits project_base_scenario:
+    keep(default scenario_str_generic == "$$(scenario_str_generic)")
+    keep(requested_cruise_speed in [20..120]kph)
+    keep(requested_cruise_speed == $$(requested_cruise_speed))
+
+    cut_in_vehicle: vehicle
+    keep(cut_in_vehicle.vehicle_category == $$(cut_in_vehicle_category_B1))
+
+
+
+
+    do serial():
+
+        vehicle_cut_in_B1: vehicle_cut_in() with:
+            keep(it.cut_in_vehicle == self.cut_in_vehicle) 
+            keep(it.gen_ego_speed_at_essence_start == requested_cruise_speed) 
+            keep(it.gen_cut_in_vehicle_speed_at_essence_start == $$(gen_cut_in_vehicle_speed_at_essence_start_B1))
+            keep(it.gen_cut_in_vehicle_side_at_essence_start == $$(gen_cut_in_vehicle_side_at_essence_start_B1))
+            keep(it.gen_cut_in_vehicle_category == $$(gen_cut_in_vehicle_category_B1)) 
+            keep(it.gen_cut_in_vehicle_time_gap_at_essence_start == $$(gen_cut_in_vehicle_time_gap_at_essence_start_B1)) 
+            keep(it.gen_cut_in_vehicle_rel_speed_at_essence_start == $$(gen_cut_in_vehicle_rel_speed_at_essence_start_B1)) 
+            keep(it.gen_cut_in_vehicle_lateral_at_essence_start == $$(gen_cut_in_vehicle_lateral_at_essence_start_B1)) 
+            keep(it.gen_cut_in_vehicle_time_gap_at_essence_end == $$(gen_cut_in_vehicle_time_gap_at_essence_end_B1))
+            keep(it.gen_cut_in_vehicle_rel_speed_at_essence_end == $$(gen_cut_in_vehicle_rel_speed_at_essence_end_B1))
+            keep(it.gen_cut_in_vehicle_lateral_at_essence_end == $$(gen_cut_in_vehicle_lateral_at_essence_end_B1))
+            keep(it.gen_cut_in_vehicle_speed_at_essence_end == $$(gen_cut_in_vehicle_speed_at_essence_end_B1))
+            keep(it.gen_duration_at_essence_generic == $$(gen_duration_at_essence_generic_B1)) 
+            keep(it.gen_cut_in_vehicle_avoid_collisions == $$(gen_cut_in_vehicle_avoid_collisions_B1))
+
+        post_phase: parallel(overlap: equal):
+            cut_in_vehicle.drive() with:
+                keep_lane(run_mode: best_effort)
+                keep_speed(run_mode: best_effort)
+            sut.car.drive() with:
+                keep_lane(run_mode: best_effort)
+                keep_speed(run_mode: best_effort)
+        with: duration([3..6]s, run_mode: best_effort)
+
+
+extend top.main:
+    do sut.$$(scenario_str_generic)()
+
+

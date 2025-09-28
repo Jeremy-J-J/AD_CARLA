@@ -1,0 +1,47 @@
+# File: ego_cut_in_scenario.osc
+# Purpose: Top-level scenario that demonstrates how to use the ego cut-in DSL
+# This file shows how to set up the environment and execute the cut-in scenario
+
+import basic.osc
+import ego_cut_in_dsl.osc
+
+# Define the top-level scenario
+scenario top:
+    # --- Global Definitions ---
+    # Define the global path variable
+    path: Path
+    
+    # Set up the map and path requirements
+    do serial():
+        # Initialize map
+        path.set_map("Town04")  # Using Town04 for its multi-lane roads
+        path.path_min_driving_lanes(3)  # Ensure at least 3 lanes are available
+
+        # Set up weather variations
+        weather_variations: parallel():
+            # Clear weather scenario
+            do serial():
+                sut.ego_cut_in(
+                    requested_cruise_speed: 80kph,
+                    weather_condition: "clear",
+                    road_friction: 1.0
+                )
+
+            # Light rain scenario
+            do serial():
+                sut.ego_cut_in(
+                    requested_cruise_speed: 70kph,  # Reduced speed for rain
+                    weather_condition: "light_rain",
+                    road_friction: 0.7
+                )
+
+            # Heavy rain scenario (with more conservative parameters)
+            do serial():
+                sut.ego_cut_in(
+                    requested_cruise_speed: 60kph,  # Further reduced speed
+                    weather_condition: "heavy_rain",
+                    road_friction: 0.4,
+                    min_safe_distance: 30m  # Increased safety distance
+                )
+
+# End of top-level scenario definition
