@@ -2,3 +2,7 @@
 */*/__pycache__
 */*/*/__pycache__
 */*/*/*/__pycache__
+
+*/*.log
+*/*.mp4
+*/result
