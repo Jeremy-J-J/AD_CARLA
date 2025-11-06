@@ -1,0 +1,233 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<OpenSCENARIO>
+  <FileHeader author="None" date="2024-05-23T14:07:19" description="None™" revMajor="1" revMinor="0"/>
+  <ParameterDeclarations/>
+  <CatalogLocations/>
+  <RoadNetwork>
+    <LogicFile filepath="Town05"/>
+    <SceneGraphFile filepath=""/>
+  </RoadNetwork>
+  <Entities>
+    <ScenarioObject name="Ego">
+      <Vehicle name="vehicle.tesla.model3" vehicleCategory="car">
+        <ParameterDeclarations/>
+        <BoundingBox>
+          <Center x="1.3105" y="0.0" z="0.76"/>
+          <Dimensions width="1.7850000000000001" length="4.313" height="1.52"/>
+        </BoundingBox>
+        <Axles>
+          <FrontAxle maxSteering="0.6108652381980153" wheelDiameter="0.508" trackWidth="1.543" positionX="2.621" positionZ="0.254"/>
+          <RearAxle maxSteering="0.0" wheelDiameter="0.508" trackWidth="1.514" positionX="0.0" positionZ="0.254"/>
+        </Axles>
+        <Performance maxSpeed="69.44444444444444" maxAcceleration="4.5" maxDeceleration="8.0"/>
+        <Properties>
+            <Property name="type" value="ego_vehicle"/>
+        </Properties>
+      </Vehicle>
+    </ScenarioObject>
+    <ScenarioObject name="CO_1">
+      <Pedestrian mass="65.0" name="walker.pedestrian.0001" pedestrianCategory="pedestrian" model="walker.pedestrian.0001">
+        <ParameterDeclarations/>
+        <BoundingBox>
+          <Center x="0.0" y="0.0" z="0.9"/>
+          <Dimensions width="0.5" length="0.5" height="1.8"/>
+        </BoundingBox>
+        <Properties/>
+      </Pedestrian>
+    </ScenarioObject>
+    <ScenarioObject name="CO_2">
+      <Vehicle name="vehicle.tesla.model3" vehicleCategory="car">
+        <ParameterDeclarations/>
+        <BoundingBox>
+          <Center x="1.3105" y="0.0" z="0.76"/>
+          <Dimensions width="1.7850000000000001" length="4.313" height="1.52"/>
+        </BoundingBox>
+        <Axles>
+          <FrontAxle maxSteering="0.6108652381980153" wheelDiameter="0.508" trackWidth="1.543" positionX="2.621" positionZ="0.254"/>
+          <RearAxle maxSteering="0.0" wheelDiameter="0.508" trackWidth="1.514" positionX="0.0" positionZ="0.254"/>
+        </Axles>
+        <Performance maxSpeed="69.44444444444444" maxAcceleration="4.5" maxDeceleration="8.0"/>
+        <Properties/>
+      </Vehicle>
+    </ScenarioObject>
+    <ScenarioObject name="CO_3">
+      <Vehicle name="vehicle.tesla.model3" vehicleCategory="car">
+        <ParameterDeclarations/>
+        <BoundingBox>
+          <Center x="1.3105" y="0.0" z="0.76"/>
+          <Dimensions width="1.7850000000000001" length="4.313" height="1.52"/>
+        </BoundingBox>
+        <Axles>
+          <FrontAxle maxSteering="0.6108652381980153" wheelDiameter="0.508" trackWidth="1.543" positionX="2.621" positionZ="0.254"/>
+          <RearAxle maxSteering="0.0" wheelDiameter="0.508" trackWidth="1.514" positionX="0.0" positionZ="0.254"/>
+        </Axles>
+        <Performance maxSpeed="69.44444444444444" maxAcceleration="4.5" maxDeceleration="8.0"/>
+        <Properties/>
+      </Vehicle>
+    </ScenarioObject>
+  </Entities>
+  <Storyboard>
+    <Init>
+      <Actions>
+        <Private entityRef="Ego">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="44" s="44.0" laneId="1" offset="0.0">
+                  <Orientation h="0.0" p="0.0" r="0.0" type="relative"/>
+                </LanePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="step" value="0.0" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="2.6667"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="CO_1">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="44" s="42.0" laneId="-2" offset="0.0">
+                  <Orientation h="1.57" p="0.0" r="0.0" type="absolute"/>
+                </LanePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="step" value="0.0" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="0.0"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="CO_2">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="44" s="20.0" laneId="-1" offset="0.0">
+                  <Orientation h="0.0" p="0.0" r="0.0" type="absolute"/>
+                </LanePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="step" value="0.0" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="4.167"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+        <Private entityRef="CO_3">
+          <PrivateAction>
+            <TeleportAction>
+              <Position>
+                <LanePosition roadId="44" s="35.0" laneId="1" offset="0.0">
+                  <Orientation h="0.0" p="0.0" r="0.0" type="absolute"/>
+                </LanePosition>
+              </Position>
+            </TeleportAction>
+          </PrivateAction>
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="step" value="0.0" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="0.0"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Private>
+      </Actions>
+    </Init>
+    <Story name="Story 1">
+      <ParameterDeclarations/>
+      <Act name="Act 1">
+        <ManeuverGroup name="Group 2" maximumExecutionCount="1">
+          <Actors selectTriggeringEntities="false">
+            <EntityRef entityRef="CO_1"/>
+          </Actors>
+          <Maneuver name="Maneuver 1">
+            <ParameterDeclarations/>
+            <Event name="Event 1" priority="parallel" maximumExecutionCount="1">
+              <Action name="Assign Route">
+                <PrivateAction>
+									<RoutingAction>
+                    <FollowTrajectoryAction>
+                      <Trajectory closed="false" name="CrossTrajectory">
+                        <Shape>
+                          <Polyline>
+                            <Vertex time="0.0">
+                              <Position>
+                                <LanePosition roadId="44" s="42.0" laneId="-2" offset="0.0">
+                                  <Orientation h="1.57"/>
+                                </LanePosition>
+                              </Position>
+                            </Vertex>
+                            <Vertex time="12.0">
+                              <Position>
+                                <LanePosition roadId="44" s="42.0" laneId="2"  offset="0.0">
+                                  <Orientation h="1.57"/>
+                                </LanePosition>
+                              </Position>
+                            </Vertex>
+                          </Polyline>
+                        </Shape>
+                      </Trajectory>
+                      <TimeReference>
+                        <Timing domainAbsoluteRelative="relative" scale="1.0" offset="0.0"/>
+                      </TimeReference>
+                      <TrajectoryFollowingMode followingMode="position"/>
+                    </FollowTrajectoryAction>
+									</RoutingAction>
+                </PrivateAction>
+              </Action>
+              <StartTrigger>
+                <ConditionGroup>
+                  <Condition name="Simulation Time" conditionEdge="none" delay="0.0">
+                    <ByValueCondition>
+                      <SimulationTimeCondition value="0.0" rule="greaterThan"/>
+                    </ByValueCondition>
+                  </Condition>
+                </ConditionGroup>
+              </StartTrigger>
+            </Event>
+          </Maneuver>
+        </ManeuverGroup>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Simulation Time" conditionEdge="rising" delay="0.0">
+              <ByValueCondition>
+                <SimulationTimeCondition value="0.0" rule="greaterThan"/>
+              </ByValueCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Act>
+    </Story>
+    <StopTrigger>
+      <ConditionGroup>
+        <Condition name="Time limit" conditionEdge="rising" delay="0.0">
+          <ByValueCondition>
+            <SimulationTimeCondition value="40.0" rule="equalTo"/>
+          </ByValueCondition>
+        </Condition>
+      </ConditionGroup>
+    </StopTrigger>
+  </Storyboard>
+</OpenSCENARIO>

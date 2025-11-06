@@ -6,6 +6,7 @@ import operator
 import random
 import re
 import sys
+import carla
 from typing import List, Tuple
 
 import py_trees
@@ -55,6 +56,15 @@ from srunner.scenarios.basic_scenario import BasicScenario
 from srunner.tools.openscenario_parser import oneshot_with_check
 from srunner.tools.osc2_helper import OSC2Helper
 
+def _safe_get_actor(name: str):
+    """
+    从 CarlaDataProvider 取出名为 name 的 actor。
+    若不存在，返回 None；否则返回 actor 本身。
+    """
+    try:
+        return CarlaDataProvider.get_actor_by_name(name)
+    except RuntimeError:
+        return None
 
 def para_type_str_sequence(config, arguments, line, column, node):
     retrieval_name = ""
@@ -198,64 +208,90 @@ def process_speed_modifier(
 
 
 def process_location_modifier(config, modifiers, duration: float, father_tree):
-    # position([distance: ]<distance> | time: <time>, [ahead_of: <car> | behind: <car>], [at: <event>])
-    # lane([[lane: ]<lane>][right_of | left_of | same_as: <car>] | [side_of: <car>, side: <av-side>][at: <event>])
     """
-    Implementation idea: First determine the lane through lane,
-    and then determine the position in the lane through position.
-    If the trigger event is start, then directly set the strasform.
-    If it is end, calculate the distance between the current position and the end position,
-    and then divide by duration to get the speed of the car.
-    @TODO supplement absolute positioning.
+    统一处理位置 / 车道类修饰符，兼容：
+      • LaneModifier
+      • PositionModifier（可能不含 lane 字段，例如行人）
+      • ChangeLaneModifier
     """
     if not modifiers:
         return
 
+    # ────────────────── 工具函数 ──────────────────
+    def _lane_id_from_modifier(mod):
+        """
+        尝试从任意修饰符对象中解析 lane_id，解析不到返回 None
+        """
+        if hasattr(mod, "get_lane_id"):          # 典型 LaneModifier
+            return mod.get_lane_id()
+
+        # PositionModifier 的几种可能存储位置
+        for key in ("_args", "args"):
+            if hasattr(mod, key):
+                args = getattr(mod, key)
+                if isinstance(args, dict) and "lane" in args:
+                    return int(args["lane"])
+        if hasattr(mod, "lane"):
+            return int(mod.lane)
+
+        return None
+
+    # ────────────────── 1. change_lane() 立即处理 ──────────────────
     for modifier in modifiers:
         if isinstance(modifier, ChangeLaneModifier):
+            npc_name     = modifier.get_actor_name()
             lane_changes = modifier.get_lane_changes()
-            av_side = modifier.get_side()
-            print(f"The car changes lanes to the {av_side} for {lane_changes} lanes.")
-            npc_name = modifier.get_actor_name()
+            direction    = modifier.get_side()
+
             actor = CarlaDataProvider.get_actor_by_name(npc_name)
-            lane_change = LaneChange(
-                actor, speed=None, direction=av_side, lane_changes=lane_changes
-            )
+            lane_change    = LaneChange(actor, speed=None,
+                                        direction=direction,
+                                        lane_changes=lane_changes)
             continue_drive = WaypointFollower(actor)
+
             father_tree.add_child(lane_change)
             father_tree.add_child(continue_drive)
-            print("END of change lane--")
             return
-    # start
-    # Deal with absolute positioning vehicles first，such as lane(1, at: start)
+
+    # ────────────────── 2. start 触发，绝对位置 ──────────────────
     event_start = [
-        m
-        for m in modifiers
+        m for m in modifiers
         if m.get_trigger_point() == "start" and m.get_refer_car() is None
     ]
 
     for m in event_start:
         car_name = m.get_actor_name()
-        # import pdb 
-        # pdb.set_trace()
-        wp = CarlaDataProvider.get_waypoint_by_laneid(m.get_lane_id())
-        if wp:
-            actor = CarlaDataProvider.get_actor_by_name(car_name)
-            actor_visible = ActorTransformSetter(actor, wp.transform)
-            father_tree.add_child(actor_visible)
+        lane_id  = _lane_id_from_modifier(m)
 
-            car_config = config.get_car_config(car_name)
-            car_config.set_arg({"init_transform": wp.transform})
-            LOG_INFO(
-                f"{car_name} car init position will be set to {wp.transform.location}, roadid = {wp.road_id}, laneid={wp.lane_id}, s = {wp.s}"
-            )
+        # 无 lane_id（如行人） → 随机找一处行人导航点
+        if lane_id is None:
+            nav_loc = CarlaDataProvider.get_world().get_random_location_from_navigation()
+            if nav_loc is None:
+                raise RuntimeError("无法在导航网格上找到可用位置")
+            wp = CarlaDataProvider.get_map().get_waypoint(
+                    nav_loc, project_to_road=False, lane_type=carla.LaneType.Sidewalk)
+            if wp is None:
+                wp = CarlaDataProvider.get_map().get_waypoint(nav_loc)
         else:
-            raise RuntimeError(f"no valid position to spawn {car_name} car")
+            wp = CarlaDataProvider.get_waypoint_by_laneid(lane_id)
+            if wp is None:
+                raise RuntimeError(f"lane_id={lane_id} 未找到有效航路点")
 
-    # Handle relative positioning vehicles
+        # 如果此时 actor 还未生成（行人通常如此），TransformSetter 可以先跳过
+        actor = CarlaDataProvider.get_actor_by_name(car_name)
+        if actor is not None:
+            father_tree.add_child(ActorTransformSetter(actor, wp.transform))
+
+        # 仅车辆在 car_config 中登记
+        try:
+            car_cfg = config.get_car_config(car_name)
+            car_cfg.set_arg({"init_transform": wp.transform})
+        except KeyError:
+            pass  # 行人等非车辆忽略
+
+    # ────────────────── 3. start 触发，带参考车辆 ──────────────────
     start_group = [
-        m
-        for m in modifiers
+        m for m in modifiers
         if m.get_trigger_point() == "start" and m.get_refer_car() is not None
     ]
 
@@ -263,169 +299,116 @@ def process_location_modifier(config, modifiers, duration: float, father_tree):
     npc_name = None
 
     for modifier in start_group:
-        npc_name = modifier.get_actor_name()
-        # location reprents npc at ego_vehicle left, right, same, ahead
-        relative_car_name, location = modifier.get_refer_car()
-        relative_car_conf = config.get_car_config(relative_car_name)
-        relative_car_location = relative_car_conf.get_transform().location
+        npc_name          = modifier.get_actor_name()
+        ref_car, location = modifier.get_refer_car()
 
-        relative_wp = CarlaDataProvider.get_map().get_waypoint(relative_car_location)
+        ref_cfg = config.get_car_config(ref_car)
+        ref_loc = ref_cfg.get_transform().location
+        ref_wp  = CarlaDataProvider.get_map().get_waypoint(ref_loc)
 
         if init_wp is None:
-            init_wp = relative_wp
+            init_wp = ref_wp
 
         if location == "left_of":
-            temp_lane = init_wp.get_left_lane()
-            if temp_lane:
-                init_wp = temp_lane
-
+            init_wp = init_wp.get_left_lane() or init_wp
         elif location == "right_of":
-            temp_lane = init_wp.get_right_lane()
-            if temp_lane:
-                init_wp = temp_lane
+            init_wp = init_wp.get_right_lane() or init_wp
         elif location == "same_as":
-            # Same lane
             pass
-        elif location in ('ahead_of', 'behind'):
-            distance = modifier.get_distance().gen_physical_value()
-
-            if location == "ahead_of":
-                wp_lists = init_wp.next(distance)
-            else:
-                wp_lists = init_wp.previous(distance)
-            if wp_lists:
-                init_wp = wp_lists[0]
+        elif location in ("ahead_of", "behind"):
+            dist = modifier.get_distance().gen_physical_value()
+            seq  = init_wp.next if location == "ahead_of" else init_wp.previous
+            init_wp = seq(dist)[0]
         else:
-            raise KeyError(f"wrong location = {location}")
+            raise KeyError(f"未知相对位置 {location}")
 
-    if init_wp:
+    if init_wp and npc_name:
         actor = CarlaDataProvider.get_actor_by_name(npc_name)
-        npc_car_visible = ActorTransformSetter(actor, init_wp.transform)
-        father_tree.add_child(npc_car_visible)
+        if actor is not None:
+            father_tree.add_child(ActorTransformSetter(actor, init_wp.transform))
 
-        car_config = config.get_car_config(npc_name)
-        car_config.set_arg({"init_transform": init_wp.transform})
-        LOG_WARNING(
-            f"{npc_name} car init position will be set to {init_wp.transform.location},roadid = {init_wp.road_id}, laneid={init_wp.lane_id}, s={init_wp.s}"
-        )
+        try:
+            car_cfg = config.get_car_config(npc_name)
+            car_cfg.set_arg({"init_transform": init_wp.transform})
+        except KeyError:
+            pass
 
-    # end
-    end_group = [m for m in modifiers if m.get_trigger_point() == "end"]
-
-    end_wp = None
+    # ────────────────── 4. end 触发 ──────────────────
+    end_group   = [m for m in modifiers if m.get_trigger_point() == "end"]
+    end_wp      = None
     end_lane_wp = None
 
     for modifier in end_group:
-        npc_name = modifier.get_actor_name()
+        npc_name          = modifier.get_actor_name()
+        ref_car, location = modifier.get_refer_car()
 
-        relative_car_name, location = modifier.get_refer_car()
-        relative_car_conf = config.get_car_config(relative_car_name)
-        relative_car_location = relative_car_conf.get_transform().location
-        LOG_WARNING(f"{relative_car_name} pos = {relative_car_location}")
+        try:
+            ref_cfg = config.get_car_config(ref_car)
+        except KeyError:
+            continue  # 参考对象不是车辆，直接跳过
 
-        relative_car_wp = CarlaDataProvider.get_map().get_waypoint(
-            relative_car_location
-        )
-        relative_car_speed = relative_car_conf.get_arg("target_speed")
+        ref_wp    = CarlaDataProvider.get_map().get_waypoint(
+                        ref_cfg.get_transform().location)
+        ref_speed = ref_cfg.get_arg("target_speed")
 
-        distance_will_drive = relative_car_speed * float(duration)
-        LOG_WARNING(f"{relative_car_name} drive distance = {distance_will_drive}")
+        drive_dist = ref_speed * float(duration)
+        base_wp    = ref_wp.next(drive_dist)[0]
 
-        end_position = relative_car_wp.next(distance_will_drive)
-        if end_position is None or len(end_position) == 0:
-            raise RuntimeError("the road is not long enough")
+        if location in ("ahead_of", "behind"):
+            offset = modifier.get_distance().gen_physical_value()
+            seq    = base_wp.next if location == "ahead_of" else base_wp.previous
+            end_wp = seq(offset)[0]
 
-        end_position = end_position[0]
+        elif location in ("left_of", "right_of", "same_as"):
+            lane_func = {
+                "left_of":  ref_wp.get_left_lane,
+                "right_of": ref_wp.get_right_lane,
+                "same_as":  lambda: ref_wp,
+            }[location]
+            end_lane_wp = lane_func()
 
-        if location in ('ahead_of', 'behind'):
-            # End position constraint
-            distance = modifier.get_distance().gen_physical_value()
-            if location == "ahead_of":
-                wp_lists = end_position.next(distance)
-            else:
-                wp_lists = end_position.previous(distance)
-            if wp_lists:
-                end_wp = wp_lists[0]
-        elif location in ('left_of', 'right_of', 'same_as'):
-            # Lane restraint at the end
-            if location == "left_of":
-                temp_wp = relative_car_wp.get_left_lane()
-            elif location == "right_of":
-                temp_wp = relative_car_wp.get_right_lane()
-            elif location == "same_as":
-                temp_wp = relative_car_wp
-            else:
-                LOG_INFO("lane spec is error")
-
-            end_lane_wp = temp_wp
-        else:
-            raise RuntimeError("relative position is igeal")
-
+    # 4.1 计算到 end_wp 的期望速度
     if end_wp:
-        current_car_conf = config.get_car_config(npc_name)
-        current_car_transform = current_car_conf.get_arg("init_transform")
+        try:
+            car_cfg = config.get_car_config(npc_name)
+        except KeyError:
+            end_wp = None   # 非车辆，无需后续速度处理
+        else:
+            cur_tf   = car_cfg.get_arg("init_transform")
+            grp      = GlobalRoutePlanner(CarlaDataProvider.get_world().get_map(), 0.5)
+            distance = calculate_distance(cur_tf.location, end_wp.transform.location, grp)
+            need_spd = distance / float(duration)
 
-        # Get the global route planner, used to calculate the route
-        grp = GlobalRoutePlanner(CarlaDataProvider.get_world().get_map(), 0.5)
-        # grp.setup()
+            car_cfg.set_arg({"desired_speed": need_spd})
+            actor = CarlaDataProvider.get_actor_by_name(npc_name)
+            if actor is not None:
+                father_tree.add_child(WaypointFollower(actor, need_spd))
 
-        distance = calculate_distance(
-            current_car_transform.location, end_wp.transform.location, grp
-        )
-
-        car_need_speed = distance / float(duration)
-
-        current_car_conf.set_arg({"desired_speed": car_need_speed})
-        LOG_WARNING(
-            f"{npc_name} car desired speed will be set to {car_need_speed * 3.6} km/h"
-        )
-
-        car_actor = CarlaDataProvider.get_actor_by_name(npc_name)
-        car_driving = WaypointFollower(car_actor, car_need_speed)
-        # car_driving.set_duration(duration)
-        father_tree.add_child(car_driving)
-
+    # 4.2 末态需要变道
     if end_lane_wp:
-        current_car_conf = config.get_car_config(npc_name)
-        current_car_transform = current_car_conf.get_arg("init_transform")
-        car_lane_wp = CarlaDataProvider.get_map().get_waypoint(
-            current_car_transform.location
-        )
+        try:
+            car_cfg = config.get_car_config(npc_name)
+        except KeyError:
+            return  # 行人等非车辆无需变道
+
+        cur_tf = car_cfg.get_arg("init_transform")
+        cur_wp = CarlaDataProvider.get_map().get_waypoint(cur_tf.location)
 
         direction = None
-        if end_lane_wp and car_lane_wp:
-            end_lane_id = end_lane_wp.lane_id
-            end_lane = None
-            if end_lane_id == car_lane_wp.get_left_lane().lane_id:
-                direction = "left"
-                end_lane = car_lane_wp.get_left_lane()
-            elif end_lane_id == car_lane_wp.get_right_lane().lane_id:
-                direction = "right"
-                end_lane = car_lane_wp.get_right_lane()
-            else:
-                print("no need change lane")
+        if end_lane_wp.lane_id == getattr(cur_wp.get_left_lane(), "lane_id", None):
+            direction = "left"
+        elif end_lane_wp.lane_id == getattr(cur_wp.get_right_lane(), "lane_id", None):
+            direction = "right"
 
-            car_actor = CarlaDataProvider.get_actor_by_name(npc_name)
+        if direction:
+            actor = CarlaDataProvider.get_actor_by_name(npc_name)
+            if actor is not None:
+                lane_change = LaneChange(actor, speed=None, direction=direction,
+                                         distance_same_lane=5, distance_other_lane=10)
+                father_tree.add_child(lane_change)
+                father_tree.add_child(WaypointFollower(actor))
 
-            lane_change = LaneChange(
-                car_actor,
-                speed=None,
-                direction=direction,
-                distance_same_lane=5,
-                distance_other_lane=10,
-            )
-            # lane_change.set_duration(duration)
-
-            if end_lane:
-                # After lane change, the car needs to modify its lane information.
-                # Here, there should be a special variable to save the current transform
-                car_config = config.get_car_config(npc_name)
-                car_config.set_arg({"init_transform": end_lane.transform})
-
-            continue_drive = WaypointFollower(car_actor)
-            # car_driving.set_duration(duration)
-            father_tree.add_child(lane_change)
-            father_tree.add_child(continue_drive)
+            car_cfg.set_arg({"init_transform": end_lane_wp.transform})
 
 
 class OSC2Scenario(BasicScenario):

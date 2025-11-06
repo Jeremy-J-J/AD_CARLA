@@ -1,0 +1,131 @@
+import basic.osc
+
+scenario top:
+    path: Path                 
+    path.set_map("Town04")
+    path.path_min_driving_lanes(3)
+
+    ego_vehicle: Model3                 # ego car
+    npc1: Rubicon                       # First other car
+    npc2: Rubicon                       # Second other car
+    npc3: Rubicon                       # Third other car
+
+    event start
+    event end
+    do serial:
+        # Initial setup - all vehicles in same lane
+        initial_position: parallel(duration: 3s):
+            npc1.drive(path) with: 
+                speed(30kph)
+                lane(2, at: start) # middle lane
+            npc2.drive(path) with: 
+                speed(30kph)
+                lane(2, at: start)
+                position(50m, behind: npc1, at: start)
+            npc3.drive(path) with: 
+                speed(30kph)
+                lane(2, at: start)
+                position(50m, behind: npc2, at: start)
+            ego_vehicle.drive(path) with:
+                speed(30kph)
+                lane(same_as: npc1, at: start)
+                position(50m, behind: npc3, at: start)
+
+        # First overtaking - move to left lane
+        overtake1_step1: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(left_of: npc1, at: end)
+
+        # First overtaking - accelerate to overtake
+        overtake1_step2: parallel(duration: 6s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                speed(50kph)
+                
+        # First overtaking - return to original lane
+        overtake1_step3: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(same_as: npc1, at: end)
+
+        # Second overtaking - move to right lane
+        overtake2_step1: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(right_of: npc2, at: end)
+
+        # Second overtaking - accelerate to overtake
+        overtake2_step2: parallel(duration: 6s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                speed(50kph)
+                
+        # Second overtaking - return to original lane
+        overtake2_step3: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(same_as: npc2, at: end)
+
+        # Third overtaking - move to left lane again
+        overtake3_step1: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(left_of: npc3, at: end)
+
+        # Third overtaking - accelerate to overtake
+        overtake3_step2: parallel(duration: 6s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                speed(50kph)
+                
+        # Third overtaking - return to original lane
+        overtake3_step3: parallel(duration: 4s):
+            npc1.drive(path) with: 
+                speed(30kph)
+            npc2.drive(path) with: 
+                speed(30kph)
+            npc3.drive(path) with: 
+                speed(30kph)
+            ego_vehicle.drive(path) with:
+                lane(same_as: npc3, at: end)
