@@ -1,5 +1,5 @@
 **/__pycache__
-
 **/*.log
 **/*.mp4
 **/result
+**/.DS_Store
