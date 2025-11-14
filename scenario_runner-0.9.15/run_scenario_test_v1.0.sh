@@ -12,15 +12,15 @@ WAIT_BEFORE_AUTOPILOT=7              # 等待秒数，按需调整
 #----------------------------------------------------------
 # 1. ScenarioRunner（后台）
 #----------------------------------------------------------
-python scenario_runner.py \
-    --sync \
-    --openscenario srunner/examples/DEMO001.xosc \
-    --reloadWorld \
-    > scenario_runner.log 2>&1 &
 # python scenario_runner.py \
 #     --sync \
 #     --openscenario srunner/examples/DEMO001.xosc \
+#     --reloadWorld \
 #     > scenario_runner.log 2>&1 &
+python scenario_runner.py \
+    --sync \
+    --openscenario srunner/examples/Volkswagen_Demo/3710170112_Car/3710170112_dynamic.xosc \
+    > scenario_runner.log 2>&1 &
 SCENARIO_PID=$!
 echo "[INFO] scenario_runner.py started (pid=${SCENARIO_PID})"
 

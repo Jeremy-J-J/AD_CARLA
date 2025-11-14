@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='utf-8'?>
+<OpenSCENARIO>
+  <FileHeader author="IPG Automotive GmbH" date="2021-11-24T09:38:23" description="Example of FollowTrajectory" revMajor="1" revMinor="0" />
+  <Catalog name="TrajectoryCatalog">
+    <Trajectory closed="false" name="EgoRoute">
+      <ParameterDeclarations>
+      </ParameterDeclarations>
+      <Shape>
+        <Polyline>
+          <Vertex time="0">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="0.027777677" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="7">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="193.65142" y="-11.500015" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="8">
+            <Position>
+              <WorldPosition h="0.009641091" p="0.0" r="0.0" x="221.44635" y="-11.471537" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="9">
+            <Position>
+              <WorldPosition h="0.029353074" p="0.0" r="0.0" x="249.21109" y="-11.010008" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="10">
+            <Position>
+              <WorldPosition h="0.037651869" p="0.0" r="0.0" x="276.9578" y="-10.098101" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="12">
+            <Position>
+              <WorldPosition h="0.017089819" p="0.0" r="0.0" x="332.46691" y="-8.2654559" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="13">
+            <Position>
+              <WorldPosition h="0.000181525" p="0.0" r="0.0" x="360.24301" y="-7.9863463" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="16">
+            <Position>
+              <WorldPosition h="-0.000474561" p="0.0" r="0.0" x="443.58455" y="-8.0039688" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="17">
+            <Position>
+              <WorldPosition h="-0.010420804" p="0.0" r="0.0" x="471.3626" y="-8.0492335" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="18">
+            <Position>
+              <WorldPosition h="-0.02737873" p="0.0" r="0.0" x="499.13445" y="-8.5199323" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="19">
+            <Position>
+              <WorldPosition h="-0.017197908" p="0.0" r="0.0" x="526.90115" y="-9.2591332" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="20">
+            <Position>
+              <WorldPosition h="0.036062166" p="0.0" r="0.0" x="554.67261" y="-9.3427388" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="21">
+            <Position>
+              <WorldPosition h="0.13240784" p="0.0" r="0.0" x="582.36885" y="-7.5885005" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="23">
+            <Position>
+              <WorldPosition h="0.35771254" p="0.0" r="0.0" x="636.32416" y="4.8243559" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="25">
+            <Position>
+              <WorldPosition h="0.57033044" p="0.0" r="0.0" x="686.42253" y="28.590981" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="27">
+            <Position>
+              <WorldPosition h="0.78275272" p="0.0" r="0.0" x="730.40537" y="62.399442" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="29">
+            <Position>
+              <WorldPosition h="0.99378293" p="0.0" r="0.0" x="766.25614" y="104.71325" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="32">
+            <Position>
+              <WorldPosition h="1.1903142" p="0.0" r="0.0" x="804.0698" y="178.84366" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="34">
+            <Position>
+              <WorldPosition h="1.2038067" p="0.0" r="0.0" x="824.23778" y="230.65541" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="36">
+            <Position>
+              <WorldPosition h="1.1997795" p="0.0" r="0.0" x="844.24438" y="282.48523" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="38">
+            <Position>
+              <WorldPosition h="1.1541041" p="0.0" r="0.0" x="864.96301" y="334.0177" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="40">
+            <Position>
+              <WorldPosition h="0.98537305" p="0.0" r="0.0" x="890.33857" y="383.3407" z="0.0" />
+            </Position>
+          </Vertex>
+        </Polyline>
+      </Shape>
+    </Trajectory>
+    <Trajectory closed="false" name="EgoRoute_Stop_Start">
+      <ParameterDeclarations>
+      </ParameterDeclarations>
+      <Shape>
+        <Polyline>
+          <Vertex time="0">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="100" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="5">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="100" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="15">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="118.02169" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="20">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="122.73482" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="25">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="122.73482" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+          <Vertex time="30">
+            <Position>
+              <WorldPosition h="0" p="0.0" r="0.0" x="125.39686" y="-11.5" z="0.0" />
+            </Position>
+          </Vertex>
+        </Polyline>
+      </Shape>
+    </Trajectory>
+  </Catalog>
+</OpenSCENARIO>

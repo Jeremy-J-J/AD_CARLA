@@ -1,0 +1,69 @@
+import basic.osc
+
+scenario top:
+    path: Path
+    path.set_map("Town10HD")
+    path.path_min_driving_lanes(3)
+
+    ego_vehicle: Model3              # Autonomous vehicle
+    front_vehicle: Rubicon           # Stopped vehicle in front
+    oncoming_vehicle: Rubicon        # Vehicle in opposite lane
+    pedestrian1: Man         # Normal walking
+
+    event start
+    event end
+
+    do serial:
+        setup: parallel(duration: 2s):
+            # Ego vehicle starts in the middle lane at low speed
+            ego_vehicle.drive(path) with:
+                speed(15kph)
+                lane(1, at: start)
+            
+            # Front vehicle is stopped in the same lane, 40m ahead
+            front_vehicle.drive(path) with:
+                speed(0kph)
+                lane(right_of: ego_vehicle, at: start)
+                position(40m, ahead_of: ego_vehicle, at: start)
+            
+            # Oncoming vehicle in opposite lane
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)
+                lane(-1, at: start)
+                # lane(left_of: ego_vehicle, at: start)
+                # position(100m, ahead_of: front_vehicle, at: start)
+
+            pedestrian1.walk() with:
+                speed(1.4mps)
+                # 行人起始位置：ego前方20米，右侧4米
+                position(28m, ahead_of: ego_vehicle, lateral: 4m, at: start)
+
+        # Main scenario execution - pedestrian begins to cross
+        pedestrian_crossing: parallel(duration: 5s):
+            # Ego vehicle continues at low speed, should detect and react
+            ego_vehicle.drive(path) with:
+                speed(15kph)
+            
+            # Front vehicle remains stopped
+            front_vehicle.drive(path) with:
+                speed(0kph)
+            
+            # Oncoming vehicle continues approaching
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)
+            
+            pedestrian1.walk() with:
+                speed(1.4mps)
+                # 行人目标位置：ego前方20米，左侧4米
+                position(28m, ahead_of: ego_vehicle, lateral: 0m, at: end)
+
+        # Continue scenario to allow reaction time
+        continue_driving: parallel(duration: 10s):
+            ego_vehicle.drive(path)
+            front_vehicle.drive(path) with:
+                speed(0kph)
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)
+            pedestrian1.walk() with:
+                speed(1.4mps)
+                position(18m, ahead_of: ego_vehicle, lateral: -4m, at: end)

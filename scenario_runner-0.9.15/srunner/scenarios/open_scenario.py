@@ -392,6 +392,9 @@ class OpenScenario(BasicScenario):
                         for actor in sequence.iter("Actors"):
                             for entity in actor.iter("EntityRef"):
                                 entity_name = entity.attrib.get('entityRef', None)
+                                # Resolve parameter reference if entity_name starts with '$'
+                                if entity_name and entity_name.startswith('$'):
+                                    entity_name = CarlaDataProvider.get_osc_global_param_value(entity_name)
                                 for k, _ in enumerate(joint_actor_list):
                                     if (joint_actor_list[k] and
                                             entity_name == joint_actor_list[k].attributes['role_name']):

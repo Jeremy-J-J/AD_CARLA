@@ -12,6 +12,7 @@ import carla
 import srunner.osc2_stdlib.misc_object as misc
 import srunner.osc2_stdlib.variables as variable
 import srunner.osc2_stdlib.vehicle as vehicles
+import srunner.osc2_stdlib.pedestrian as pedestrians  # 添加行人标准库
 from srunner.osc2.ast_manager import ast_node
 from srunner.osc2.ast_manager.ast_vistor import ASTVisitor
 from srunner.osc2_dm.physical_object import PhysicalObject, UnitObject
@@ -28,7 +29,11 @@ from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
 # OSC-2 helper
 from srunner.tools.osc2_helper import OSC2Helper
 
+# 车辆类型定义
 vehicle_type = ["Car", "Model3", "Mkz2017", "Carlacola", "Rubicon"]
+
+# 行人类型定义 - 基于OSC 1.0行人实现模式
+pedestrian_type = ["Pedestrian", "Man", "Woman", "Women", "Child", "Elder"]
 
 
 def flat_list(list_of_lists):
@@ -85,14 +90,35 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
     #   Public helpers used by other modules                                 #
     # ====================================================================== #
 
-    def get_car_config(self, car_name: str) -> vehicles.Vehicle:
+    def get_car_config(self, car_name: str):
+        """
+        获取actor配置（支持车辆和行人）
+        
+        Args:
+            car_name: actor名称
+            
+        Returns:
+            车辆或行人的配置对象
+        """
         return self.all_actors[car_name]
 
-    def add_ego_vehicles(self, vc: vehicles.Vehicle):
+    def add_ego_vehicles(self, vc):
+        """
+        添加ego车辆或行人
+        
+        Args:
+            vc: 车辆或行人对象
+        """
         self.ego_vehicles.append(vc)
         self.all_actors[vc.get_name()] = vc
 
-    def add_other_actors(self, npc: vehicles.Vehicle):
+    def add_other_actors(self, npc):
+        """
+        添加其他actor（车辆或行人）
+        
+        Args:
+            npc: 车辆或行人对象
+        """
         self.other_actors.append(npc)
         self.all_actors[npc.get_name()] = npc
 
@@ -124,7 +150,7 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
                 self.father_ins.variables[para_name] = para_value
             elif isinstance(arguments, str):
                 para_type = arguments
-                # 形如  my_car: Car
+                # 形如  my_car: Car 或 pedestrian1: Man
                 if para_type in vehicle_type:
                     vehicle_class = getattr(vehicles, para_type)
                     v_ins = vehicle_class()
@@ -133,6 +159,16 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
                         self.father_ins.add_ego_vehicles(v_ins)
                     else:
                         self.father_ins.add_other_actors(v_ins)
+                elif para_type in pedestrian_type:
+                    # 处理行人类型 - 参考OSC 1.0行人实现
+                    pedestrian_class = getattr(pedestrians, para_type)
+                    ped_ins = pedestrian_class()
+                    ped_ins.set_name(para_name)
+                    # 行人通常作为NPC，不作为ego
+                    if para_name == OSC2Helper.ego_name:
+                        self.father_ins.add_ego_vehicles(ped_ins)
+                    else:
+                        self.father_ins.add_other_actors(ped_ins)
                 self.father_ins.variables[para_name] = para_type
 
             self.father_ins.store_variable(self.father_ins.variables)
@@ -146,8 +182,9 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
         def visit_scenario_declaration(self, node: ast_node.ScenarioDeclaration):
             scenario_name = node.qualified_behavior_name
             self.father_ins.scenario_declaration[scenario_name] = node
-            if scenario_name != "top":
-                return
+            # 移除了 scenario_name != "top" 的限制，以支持任意命名的场景
+            # if scenario_name != "top":
+            #     return
 
             for child in node.get_children():
                 if isinstance(child, ast_node.ParameterDeclaration):
@@ -187,6 +224,15 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
                         self.father_ins.add_ego_vehicles(v_ins)
                     else:
                         self.father_ins.add_other_actors(v_ins)
+                elif para_type in pedestrian_type:
+                    # 处理行人类型 - 参考OSC 1.0行人实现
+                    pedestrian_class = getattr(pedestrians, para_type)
+                    ped_ins = pedestrian_class()
+                    ped_ins.set_name(para_name)
+                    if para_name == OSC2Helper.ego_name:
+                        self.father_ins.add_ego_vehicles(ped_ins)
+                    else:
+                        self.father_ins.add_other_actors(ped_ins)
                 self.father_ins.variables[para_name] = para_type
 
             self.father_ins.store_variable(self.father_ins.variables)
@@ -375,8 +421,6 @@ class OSC2ScenarioConfiguration(ScenarioConfiguration):
     def _set_carla_town(self):
         """Ensure the requested CARLA map is loaded and DataProvider updated."""
         self.town = self.path.get_map()
-        print(self.path)
-        print(self.path.get_map())
 
         world = self.client.get_world()
         wmap = world.get_map() if world else None

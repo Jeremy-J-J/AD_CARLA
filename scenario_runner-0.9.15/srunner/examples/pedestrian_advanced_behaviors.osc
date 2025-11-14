@@ -1,0 +1,83 @@
+import basic.osc
+
+scenario top:
+    path: Path
+    path.set_map("Town10HD")
+    path.path_min_driving_lanes(3)
+    
+    # Multiple pedestrians with different behaviors
+    ego_vehicle: Model3
+    pedestrian1: Man         # Normal walking
+    pedestrian2: Woman       # Fast walking (hurrying)
+    pedestrian3: Elder       # Slow walking
+    pedestrian4: Child       # Running child
+    
+    event start
+    event end
+    
+    do serial:
+        # Scenario: Urban intersection with multiple pedestrians
+        
+        # Phase 1: Initial setup
+        init_phase: parallel(duration: 2s):
+            ego_vehicle.drive(path) with:
+                speed(30kph)
+                lane(2, at: start)
+            
+            # Pedestrian 1: Normal walking across the street
+            pedestrian1.walk() with:
+                speed(1.4mps)
+                position(20m, ahead_of: ego_vehicle, lateral: -4m, at: start)
+            
+            # Pedestrian 2: Woman hurrying (faster speed)
+            pedestrian2.walk() with:
+                speed(2.2mps)  # Fast walk
+                position(25m, ahead_of: ego_vehicle, lateral: -5m, at: start)
+            
+            # Pedestrian 3: Elder walking slowly
+            pedestrian3.walk() with:
+                speed(0.8mps)  # Slow walk
+                position(30m, ahead_of: ego_vehicle, lateral: -3m, at: start)
+            
+            # Pedestrian 4: Child running
+            pedestrian4.walk() with:
+                speed(2.5mps)  # Running
+                position(15m, ahead_of: ego_vehicle, lateral: -2m, at: start)
+        
+        # Phase 2: Crossing action
+        crossing_phase: parallel(duration: 10s):
+            ego_vehicle.drive(path) with:
+                speed(30kph)
+            
+            # Different crossing patterns
+            pedestrian1.walk() with:
+                speed(1.4mps)
+                position(20m, ahead_of: ego_vehicle, lateral: 4m, at: end)
+            
+            pedestrian2.walk() with:
+                speed(2.2mps)
+                position(25m, ahead_of: ego_vehicle, lateral: 5m, at: end)
+            
+            pedestrian3.walk() with:
+                speed(0.8mps)
+                position(30m, ahead_of: ego_vehicle, lateral: 3m, at: end)
+            
+            pedestrian4.walk() with:
+                speed(2.5mps)
+                position(15m, ahead_of: ego_vehicle, lateral: 2m, at: end)
+        
+        # Phase 3: Post-crossing
+        post_crossing: parallel(duration: 5s):
+            ego_vehicle.drive(path) with:
+                speed(30kph)
+            
+            # All pedestrians stop after crossing
+            pedestrian1.walk() with:
+                speed(0mps)
+            pedestrian2.walk() with:
+                speed(0mps)
+            pedestrian3.walk() with:
+                speed(0mps)
+            pedestrian4.walk() with:
+                speed(0mps)
+

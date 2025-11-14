@@ -1,3 +1,14 @@
+#!/usr/bin/env python
+
+# Copyright (c) 2024 - OSC 2.0 Modifier Support
+# This module provides modifiers for OSC 2.0 actions
+# Supports both vehicles and pedestrians based on OSC 1.0 implementation patterns
+
+"""
+Modifier module for OSC 2.0
+Provides modifiers for vehicle and pedestrian actions
+"""
+
 import random
 import sys
 

@@ -1,0 +1,700 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<OpenSCENARIO>
+  <FileHeader revMajor="1" revMinor="0" date="2022-05-10T10:00:00" author="IPG Automotive GmbH" description="Maneuver catalog" />
+  <Catalog name="ManeuverCatalog">
+    <Maneuver name="TestAccelerationCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                  <EntityRef entityRef="RelativeWorld2" />
+                  <EntityRef entityRef="TargetBlocking" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <AccelerationCondition rule="greaterThan" value="2.0"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestCollisionCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                  <EntityRef entityRef="RelativeWorld2" />
+                  <EntityRef entityRef="TargetBlocking" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <CollisionCondition>
+                    <EntityRef entityRef="Ego"/>
+                  </CollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestDistanceCondition_WP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <DistanceCondition alongRoute="false" freespace="true" rule="lessThan" value="5.0">
+                    <Position>
+                      <WorldPosition x="40.0" y="-8.0" />
+                    </Position>
+                  </DistanceCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestEndofRoadCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <EndOfRoadCondition duration="3" />
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestOffroadCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                  <EntityRef entityRef="RelativeWorld2" />
+                  <EntityRef entityRef="TargetBlocking" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <OffroadCondition duration="2"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestReachPositionCondition_WP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <ReachPositionCondition tolerance="0.5">
+                    <Position>
+                      <WorldPosition x="30.0" y="-8.0" />
+                    </Position>
+                  </ReachPositionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestRelativeDistanceCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <RelativeDistanceCondition entityRef="RelativeWorld1" freespace="true" relativeDistanceType="cartesianDistance" rule="lessThan" value="5.0" />
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestRelativeSpeedCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                  <EntityRef entityRef="RelativeWorld2" />
+                  <EntityRef entityRef="TargetBlocking" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <RelativeSpeedCondition entityRef="RelativeWorld1" rule="greaterThan" value="2.0"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestSpeedCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="" delay="0" conditionEdge="rising">
+              <ByValueCondition>
+                <SimulationTimeCondition value="1" rule="greaterThan"/>
+              </ByValueCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+      <Event name="MyLaneChangeLevtEvent" priority="overwrite" maximumExecutionCount="1">
+        <Action name="MyLaneChangeRightAction">
+          <PrivateAction>
+            <LateralAction>
+              <LaneChangeAction>
+                <LaneChangeActionDynamics dynamicsShape="cubic" value="5" dynamicsDimension="time"/>
+                <LaneChangeTarget>
+                  <RelativeTargetLane entityRef="Ego" value="1"/>
+                </LaneChangeTarget>
+              </LaneChangeAction>
+            </LateralAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <SpeedCondition rule="greaterThan" value="20.0"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestStandStillCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="RelativeWorld1" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <StandStillCondition duration="2.0" />
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeHeadwayCondition">
+      <ParameterDeclarations>
+        <!--The ParameterDeclarations section is needed for easy variation.-->
+        <ParameterDeclaration name="alongroute" parameterType="boolean" value="false" />
+        <ParameterDeclaration name="free_space" parameterType="boolean" value="false" />
+        <ParameterDeclaration name="rule" parameterType="string" value="greaterThan" />
+      </ParameterDeclarations>
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeHeadwayCondition alongRoute="$alongroute" entityRef="RelativeWorld1" freespace="$free_space" rule="$rule" value="2"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToObj">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="true" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <EntityRef entityRef="RelativeWorld1"/>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_LP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="false" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <LanePosition laneId="-4" roadId="0" s="80.0" offset="0.0"></LanePosition>
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_RLP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="true" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <RelativeLanePosition entityRef="RelativeWorld1" dLane="0" ds="-5.0"></RelativeLanePosition>
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_ROP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="false" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <RelativeObjectPosition dx="-5" dy="0" dz="0" entityRef="RelativeWorld1" />
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_RP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="false" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <RoadPosition roadId="0" s="80.0" t="-8.0"></RoadPosition>
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_RRP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="true" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <RelativeRoadPosition entityRef="RelativeWorld1" ds="-10.0" dt="0"></RelativeRoadPosition>
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_RWP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="false" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <RelativeWorldPosition dx="-10" dy="0" dz="0" entityRef="RelativeWorld1" />
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTimeToCollisionCondition_ToPos_WP">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TimeToCollisionCondition alongRoute="false" freespace="true" rule="lessThan" value="2">
+                    <TimeToCollisionConditionTarget>
+                      <Position>
+                        <WorldPosition h="0" p="0" r="0" x ="80.0" y="-8.0" z="0"/>
+                      </Position>
+                    </TimeToCollisionConditionTarget>
+                  </TimeToCollisionCondition>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+    <Maneuver name="TestTraveledDistanceCondition">
+      <Event name="Speed_22.22" priority="overwrite" maximumExecutionCount="1">
+        <Action name="cubic">
+          <PrivateAction>
+            <LongitudinalAction>
+              <SpeedAction>
+                <SpeedActionDynamics dynamicsShape="linear" value="5" dynamicsDimension="time"/>
+                <SpeedActionTarget>
+                  <AbsoluteTargetSpeed value="22.22"/>
+                </SpeedActionTarget>
+              </SpeedAction>
+            </LongitudinalAction>
+          </PrivateAction>
+        </Action>
+        <StartTrigger>
+          <ConditionGroup>
+            <Condition name="Test_condition" delay="0" conditionEdge="rising">
+              <ByEntityCondition>
+                <TriggeringEntities triggeringEntitiesRule="any">
+                  <EntityRef entityRef="Ego" />
+                  <EntityRef entityRef="RelativeWorld1" />
+                </TriggeringEntities>
+                <EntityCondition>
+                  <TraveledDistanceCondition value="10.0"/>
+                </EntityCondition>
+              </ByEntityCondition>
+            </Condition>
+          </ConditionGroup>
+        </StartTrigger>
+      </Event>
+    </Maneuver>
+  </Catalog>
+</OpenSCENARIO>

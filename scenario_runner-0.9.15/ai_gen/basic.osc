@@ -34,3 +34,11 @@ modifier Path.set_map
 modifier Path.path_min_driving_lanes
 actor Model3
 actor Rubicon
+
+# Pedestrian actors - OSC 2.0 enhanced
+actor Man
+actor Woman
+actor Women
+actor Child
+actor Elder
+actor Pedestrian

@@ -1,0 +1,55 @@
+import basic.osc
+
+scenario top:
+    path: Path
+    path.set_map("Town10HD")
+    path.path_min_driving_lanes(3)
+
+    ego_vehicle: Model3              # Autonomous vehicle
+    front_vehicle: Rubicon           # Stopped vehicle in front
+    oncoming_vehicle: Rubicon        # Vehicle in opposite lane
+
+    event start
+    event end
+
+    do serial:
+        setup: parallel(duration: 2s):
+            # Ego vehicle starts in the middle lane at low speed
+            ego_vehicle.drive(path) with:
+                speed(15kph)
+                lane(1, at: start)
+            
+            # Front vehicle is stopped in the same lane, 30m ahead
+            front_vehicle.drive(path) with:
+                speed(0kph)
+                lane(right_of: ego_vehicle, at: start)
+                position(30m, ahead_of: ego_vehicle, at: start)
+            
+            # Oncoming vehicle in opposite lane
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)
+                lane(-1, at: start)
+                # lane(left_of: ego_vehicle, at: start)
+                # position(100m, ahead_of: front_vehicle, at: start)
+
+        # Main scenario execution - pedestrian begins to cross
+        pedestrian_crossing: parallel(duration: 5s):
+            # Ego vehicle continues at low speed, should detect and react
+            ego_vehicle.drive(path) with:
+                speed(15kph)
+            
+            # Front vehicle remains stopped
+            front_vehicle.drive(path) with:
+                speed(0kph)
+            
+            # Oncoming vehicle continues approaching
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)
+
+        # Continue scenario to allow reaction time
+        continue_driving: parallel(duration: 10s):
+            ego_vehicle.drive(path)
+            front_vehicle.drive(path) with:
+                speed(0kph)
+            oncoming_vehicle.drive(path) with:
+                speed(30kph)

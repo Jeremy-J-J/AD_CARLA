@@ -2740,16 +2740,22 @@ class WaypointFollower(AtomicBehavior):
         super(WaypointFollower, self).initialise()
         self._start_time = GameTime.get_time()
         self._unique_id = int(round(time.time() * 1e9))
+        
+        print(f"[WF Debug] Initialising WaypointFollower: {self.name}, unique_id: {self._unique_id}, actor: {self._actor.id if self._actor else 'None'}")
+        
         try:
             # check whether WF for this actor is already running and add new WF to running_WF list
             check_attr = operator.attrgetter("running_WF_actor_{}".format(self._actor.id))
             running = check_attr(py_trees.blackboard.Blackboard())
             active_wf = copy.copy(running)
+            print(f"[WF Debug] Existing running WFs for actor {self._actor.id}: {active_wf}")
             active_wf.append(self._unique_id)
             py_trees.blackboard.Blackboard().set(
                 "running_WF_actor_{}".format(self._actor.id), active_wf, overwrite=True)
+            print(f"[WF Debug] Updated running WFs for actor {self._actor.id}: {active_wf}")
         except AttributeError:
             # no WF is active for this actor
+            print(f"[WF Debug] No existing WFs for actor {self._actor.id}, creating new lists")
             py_trees.blackboard.Blackboard().set("terminate_WF_actor_{}".format(self._actor.id), [], overwrite=True)
             py_trees.blackboard.Blackboard().set(
                 "running_WF_actor_{}".format(self._actor.id), [self._unique_id], overwrite=True)
@@ -2801,6 +2807,14 @@ class WaypointFollower(AtomicBehavior):
         """
         Compute next control step for the given waypoint plan, obtain and apply control to actor
         """
+        # Debug
+        if "WalkTo" in self.name and not hasattr(self, '_update_count'):
+            self._update_count = 0
+        if "WalkTo" in self.name:
+            self._update_count += 1
+            if self._update_count % 50 == 1:
+                print(f"[WF Update Called] {self.name}: update count = {self._update_count}")
+        
         new_status = py_trees.common.Status.RUNNING
 
         check_term = operator.attrgetter("terminate_WF_actor_{}".format(self._actor.id))
@@ -2833,6 +2847,11 @@ class WaypointFollower(AtomicBehavior):
         for actor in self._local_planner_dict:
             local_planner = self._local_planner_dict[actor] if actor else None
             if actor is not None and actor.is_alive and local_planner is not None:
+                # Debug
+                if "WalkTo" in self.name and not hasattr(self, '_type_printed'):
+                    print(f"[WF Update Debug] {self.name}: actor type = {type(actor)}, isinstance Walker = {isinstance(actor, carla.Walker)}, local_planner = {local_planner}")
+                    self._type_printed = True
+                
                 # Check if the actor is a vehicle/bike
                 if not isinstance(actor, carla.Walker):
                     control = local_planner.run_step(debug=False)
@@ -2857,8 +2876,17 @@ class WaypointFollower(AtomicBehavior):
                         control.speed = self._target_speed
                         control.direction = direction / direction_norm
                         actor.apply_control(control)
+                        
+                        # Debug: 每100帧打印一次
+                        if not hasattr(self, '_debug_counter'):
+                            self._debug_counter = 0
+                        self._debug_counter += 1
+                        if self._debug_counter % 100 == 0:
+                            print(f"[WF Update] {self.name}: actor at {actor_location}, target {location}, dist={direction_norm:.2f}, speed={self._target_speed}, waypoints left={len(self._actor_dict[actor])}")
+                        
                         if direction_norm < 1.0:
                             self._actor_dict[actor] = self._actor_dict[actor][1:]
+                            print(f"[WF Update] {self.name}: Reached waypoint! Remaining waypoints: {len(self._actor_dict[actor]) if self._actor_dict[actor] else 0}")
                             if self._actor_dict[actor] is None:
                                 success = True
                     else:
@@ -2877,6 +2905,8 @@ class WaypointFollower(AtomicBehavior):
         On termination of this behavior,
         the controls should be set back to 0.
         """
+        print(f"[WF Debug] Terminating WaypointFollower: {self.name}, unique_id: {self._unique_id}, status: {new_status}")
+        
         for actor in self._local_planner_dict:
             if actor is not None and actor.is_alive:
                 control, _ = get_actor_control(actor)
@@ -4900,7 +4930,7 @@ class MovePedestrianWithEgo(AtomicBehavior):
         Set start time
         """
         self._start_time = GameTime.get_time()
-        added_location = carla.Location(x=self._displacement, z=-self._distance)
+        added_location = carla.Location(x=self._displacement, z=-self._displacement)
         self._actor.set_location(self._reference_actor.get_location() + added_location)
         super().initialise()
 
@@ -4915,3 +4945,301 @@ class MovePedestrianWithEgo(AtomicBehavior):
             self._actor.set_location(self._reference_actor.get_location() + added_location)
             self._start_time = GameTime.get_time()
         return new_status
+
+
+# ========== OSC 2.0 Enhanced Pedestrian Behaviors ==========
+# 参考OpenSCENARIO 1.0的行人控制模式，为OSC 2.0提供增强的行人行为
+
+
+class PedestrianWalkToLocation(AtomicBehavior):
+    """
+    行人行走到指定位置的行为
+    
+    参考OSC 1.0的PedestrianControl和AcquirePositionAction实现
+    
+    Args:
+        actor (carla.Walker): 行人actor
+        target_location (carla.Location): 目标位置
+        target_speed (float): 行走速度 (m/s)
+        distance_threshold (float): 到达判定阈值 (m)
+        name (str): 行为名称
+    """
+    
+    def __init__(self, actor, target_location, target_speed=1.4, 
+                 distance_threshold=1.0, name="PedestrianWalkToLocation"):
+        """
+        初始化行人行走行为
+        """
+        super(PedestrianWalkToLocation, self).__init__(name, actor)
+        self._target_location = target_location
+        self._target_speed = target_speed
+        self._distance_threshold = distance_threshold
+        self._control = carla.WalkerControl()
+        
+    def initialise(self):
+        """初始化行为"""
+        super(PedestrianWalkToLocation, self).initialise()
+        
+    def update(self):
+        """
+        更新行为，控制行人向目标位置移动
+        """
+        new_status = py_trees.common.Status.RUNNING
+        
+        if not self._actor or not self._actor.is_alive:
+            return py_trees.common.Status.FAILURE
+        
+        # 获取当前位置
+        current_location = CarlaDataProvider.get_location(self._actor)
+        if current_location is None:
+            return py_trees.common.Status.RUNNING
+        
+        # 计算到目标的距离和方向
+        direction = self._target_location - current_location
+        distance = math.sqrt(direction.x**2 + direction.y**2)
+        
+        # 检查是否到达目标
+        if distance < self._distance_threshold:
+            # 停止行走
+            self._control.speed = 0.0
+            self._control.direction = carla.Vector3D(0, 0, 0)
+            self._actor.apply_control(self._control)
+            return py_trees.common.Status.SUCCESS
+        
+        # 计算归一化方向向量
+        direction_norm = direction / distance
+        
+        # 设置控制命令
+        self._control.speed = self._target_speed
+        self._control.direction = direction_norm
+        self._actor.apply_control(self._control)
+        
+        return new_status
+    
+    def terminate(self, new_status):
+        """终止时停止行人"""
+        if self._actor and self._actor.is_alive:
+            control = carla.WalkerControl()
+            control.speed = 0.0
+            self._actor.apply_control(control)
+        super(PedestrianWalkToLocation, self).terminate(new_status)
+
+
+class PedestrianCrossRoad(AtomicBehavior):
+    """
+    行人过马路行为
+    
+    参考OSC 1.0的PedestrianCrossingFront场景实现
+    自动计算横向穿越路径
+    
+    Args:
+        actor (carla.Walker): 行人actor
+        crossing_distance (float): 过马路距离 (m)
+        target_speed (float): 行走速度 (m/s)
+        direction (str): 过马路方向 ("left", "right")
+        name (str): 行为名称
+    """
+    
+    def __init__(self, actor, crossing_distance=10.0, target_speed=1.4, 
+                 direction="right", name="PedestrianCrossRoad"):
+        """
+        初始化过马路行为
+        """
+        super(PedestrianCrossRoad, self).__init__(name, actor)
+        self._crossing_distance = crossing_distance
+        self._target_speed = target_speed
+        self._direction = direction
+        self._waypoints = []
+        self._current_waypoint_idx = 0
+        self._distance_threshold = 1.0
+        
+    def initialise(self):
+        """初始化：计算过马路路径点"""
+        super(PedestrianCrossRoad, self).initialise()
+        
+        # 获取行人当前transform
+        current_transform = CarlaDataProvider.get_transform(self._actor)
+        
+        # 计算横向向量
+        if self._direction == "right":
+            lateral_vector = current_transform.rotation.get_right_vector()
+        else:  # left
+            lateral_vector = -current_transform.rotation.get_right_vector()
+        
+        # 生成过马路路径点
+        num_waypoints = max(int(self._crossing_distance / 0.5), 2)
+        for i in range(num_waypoints + 1):
+            offset = (i / num_waypoints) * self._crossing_distance
+            waypoint_location = current_transform.location + lateral_vector * offset
+            self._waypoints.append(waypoint_location)
+        
+        self._current_waypoint_idx = 0
+        
+    def update(self):
+        """
+        更新行为，控制行人沿路径点过马路
+        """
+        new_status = py_trees.common.Status.RUNNING
+        
+        if not self._actor or not self._actor.is_alive:
+            return py_trees.common.Status.FAILURE
+        
+        # 检查是否完成所有路径点
+        if self._current_waypoint_idx >= len(self._waypoints):
+            control = carla.WalkerControl()
+            control.speed = 0.0
+            self._actor.apply_control(control)
+            return py_trees.common.Status.SUCCESS
+        
+        # 获取当前位置和目标路径点
+        current_location = CarlaDataProvider.get_location(self._actor)
+        target_waypoint = self._waypoints[self._current_waypoint_idx]
+        
+        # 计算到目标路径点的距离和方向
+        direction = target_waypoint - current_location
+        distance = math.sqrt(direction.x**2 + direction.y**2)
+        
+        # 检查是否到达当前路径点
+        if distance < self._distance_threshold:
+            self._current_waypoint_idx += 1
+            return new_status
+        
+        # 计算归一化方向向量
+        direction_norm = direction / distance
+        
+        # 设置控制命令
+        control = carla.WalkerControl()
+        control.speed = self._target_speed
+        control.direction = direction_norm
+        self._actor.apply_control(control)
+        
+        return new_status
+    
+    def terminate(self, new_status):
+        """终止时停止行人"""
+        if self._actor and self._actor.is_alive:
+            control = carla.WalkerControl()
+            control.speed = 0.0
+            self._actor.apply_control(control)
+        super(PedestrianCrossRoad, self).terminate(new_status)
+
+
+class PedestrianStandStill(AtomicBehavior):
+    """
+    行人站立不动行为
+    
+    参考OSC 1.0的SpeedAction with speed=0
+    
+    Args:
+        actor (carla.Walker): 行人actor
+        duration (float): 站立持续时间（秒），None表示无限期
+        name (str): 行为名称
+    """
+    
+    def __init__(self, actor, duration=None, name="PedestrianStandStill"):
+        """
+        初始化站立行为
+        """
+        super(PedestrianStandStill, self).__init__(name, actor)
+        self._duration = duration
+        self._start_time = None
+        
+    def initialise(self):
+        """初始化：记录开始时间"""
+        super(PedestrianStandStill, self).initialise()
+        self._start_time = GameTime.get_time()
+        
+        # 停止行人移动
+        if self._actor and self._actor.is_alive:
+            control = carla.WalkerControl()
+            control.speed = 0.0
+            control.direction = carla.Vector3D(0, 0, 0)
+            self._actor.apply_control(control)
+        
+    def update(self):
+        """
+        更新行为，保持行人静止
+        """
+        if not self._actor or not self._actor.is_alive:
+            return py_trees.common.Status.FAILURE
+        
+        # 确保行人保持静止
+        control = carla.WalkerControl()
+        control.speed = 0.0
+        control.direction = carla.Vector3D(0, 0, 0)
+        self._actor.apply_control(control)
+        
+        # 检查是否超时
+        if self._duration is not None:
+            elapsed_time = GameTime.get_time() - self._start_time
+            if elapsed_time >= self._duration:
+                return py_trees.common.Status.SUCCESS
+        
+        return py_trees.common.Status.RUNNING
+
+
+class PedestrianChangeSpeed(AtomicBehavior):
+    """
+    改变行人速度的行为
+    
+    参考OSC 1.0的LongitudinalAction - SpeedAction
+    
+    Args:
+        actor (carla.Walker): 行人actor
+        target_speed (float): 目标速度 (m/s)
+        duration (float): 速度变化持续时间（秒），None表示立即改变
+        name (str): 行为名称
+    """
+    
+    def __init__(self, actor, target_speed, duration=None, name="PedestrianChangeSpeed"):
+        """
+        初始化速度改变行为
+        """
+        super(PedestrianChangeSpeed, self).__init__(name, actor)
+        self._target_speed = target_speed
+        self._duration = duration
+        self._start_time = None
+        self._initial_speed = None
+        
+    def initialise(self):
+        """初始化：记录开始时间和初始速度"""
+        super(PedestrianChangeSpeed, self).initialise()
+        self._start_time = GameTime.get_time()
+        
+        # 获取当前速度
+        if self._actor and self._actor.is_alive:
+            velocity = CarlaDataProvider.get_velocity(self._actor)
+            self._initial_speed = math.sqrt(velocity.x**2 + velocity.y**2 + velocity.z**2)
+        else:
+            self._initial_speed = 0.0
+        
+    def update(self):
+        """
+        更新行为，逐渐改变速度
+        """
+        if not self._actor or not self._actor.is_alive:
+            return py_trees.common.Status.FAILURE
+        
+        control = self._actor.get_control()
+        
+        if self._duration is None or self._duration <= 0:
+            # 立即改变速度
+            control.speed = self._target_speed
+            self._actor.apply_control(control)
+            return py_trees.common.Status.SUCCESS
+        else:
+            # 渐变速度
+            elapsed_time = GameTime.get_time() - self._start_time
+            
+            if elapsed_time >= self._duration:
+                control.speed = self._target_speed
+                self._actor.apply_control(control)
+                return py_trees.common.Status.SUCCESS
+            
+            # 线性插值
+            alpha = elapsed_time / self._duration
+            current_speed = self._initial_speed + (self._target_speed - self._initial_speed) * alpha
+            control.speed = current_speed
+            self._actor.apply_control(control)
+            
+            return py_trees.common.Status.RUNNING
