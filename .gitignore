@@ -1,11 +1,5 @@
-*/__pycache__
-*/*/__pycache__
-*/*/*/__pycache__
-*/*/*/*/__pycache__
+**/__pycache__
 
-*/*.log
-*/*.mp4
-*/*/*.mp4
-*/*/*/*.mp4
-*/*/*/*/*.mp4
-*/result
+**/*.log
+**/*.mp4
+**/result
